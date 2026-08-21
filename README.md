@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/dawn-dock-logo.png" alt="Dawn Dock Logo" width="500">
+  <img src="docs/images/dawn-dock-logo-2.png" alt="Dawn Dock Logo" width="500">
 </p>
 
 A USB-powered ESP32-S3 bedside clock that keeps time and alarms offline, syncs user-approved schedules from a phone or PC, dims for sleep, and remains useful without internet.
