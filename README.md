@@ -2,7 +2,7 @@
 
 A USB-powered ESP32-S3 bedside clock that keeps time and alarms offline, syncs user-approved schedules from a phone or PC, dims for sleep, and remains useful without internet.
 
-![Dawn Dock Mockup](docs/images/dawn-dock-mockup.jpg) 
+![Dawn Dock Mockup](docs/images/dawn-dock-mockup-pill.jpg)
 
 <video src="docs/Dawn_Dock_sits_between_a_basic.mp4" width="100%" controls></video>
 
