@@ -1,0 +1,23 @@
+# Build outputs
+build/
+.dart_tool/
+.flutter-plugins*
+.packages
+.pub-cache/
+
+# KiCad working/backup files
+*.kicad_prl
+*.kicad_sch-bak
+*-backups/
+~*.lck
+
+# Generated analysis and ordering data
+hardware/kicad/analysis/*/
+datasheets/
+bom/orders/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
