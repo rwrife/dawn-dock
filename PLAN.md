@@ -6,6 +6,14 @@ Dawn Dock is a low-voltage, offline-first bedside clock. The MVP executes locall
 
 ## Architecture
 
+The normative v0.1 design baseline is split into reviewable sources:
+
+- [`docs/system-architecture.md`](docs/system-architecture.md) — boundaries, editable block diagram, 5 V allocation, measurable targets, and open gates.
+- [`docs/alarm-semantics.md`](docs/alarm-semantics.md) — deterministic state, DST/time-correction, duplicate-prevention, and reboot behavior.
+- [`docs/threat-model.md`](docs/threat-model.md) — assets, trust boundaries, misuse cases, and required controls.
+- [`docs/risk-register.md`](docs/risk-register.md) — owned likelihood/impact risks and verification gates.
+- [`docs/verification-matrix.md`](docs/verification-matrix.md) — requirement-to-evidence traceability and evidence-class rules.
+
 ### Hardware
 
 - **Controller/display candidate:** Waveshare ESP32-S3-Touch-LCD-3.5 module, subject to datasheet and schematic review.
@@ -45,7 +53,7 @@ Dawn Dock is a low-voltage, offline-first bedside clock. The MVP executes locall
 
 ## Milestones and dependency order
 
-1. **Requirements and risk baseline** — define alarm behavior, brightness, acoustic target, power budget, mechanical envelope, connectivity, privacy, and safety exclusions.
+1. **Requirements and risk baseline (v0.1 complete)** — alarm behavior, brightness/acoustic targets, 1.5 A power envelope, mechanical limits, threat model, risk register, privacy, accessibility, and safety exclusions are frozen. Component capability and all physical performance remain unverified.
 2. **Component validation and architecture proof** — collect manufacturer docs, compare display/RTC/audio options, measure module behavior, and record MPN/manufacturer fields.
 3. **Editable KiCad carrier and BOM** — complete schematic, ERC, layout, DRC, source-property BOM export, and review evidence.
 4. **Firmware core** — deterministic alarm engine, persistence, RTC/timezone handling, controls, UI, diagnostics, recovery, build/tests.
@@ -97,3 +105,7 @@ Dawn Dock is a low-voltage, offline-first bedside clock. The MVP executes locall
 ## Explicit non-goals
 
 Voice assistants, cameras, cloud accounts, remote surveillance, medical/emergency use, battery-powered primary operation, mains design, automatic unreviewed calendar alarms, and broad smart-home control are outside the MVP.
+
+## Baseline change control
+
+Changes to a frozen target update the system architecture, hardware requirements, verification matrix, and affected risk rows in the same PR. Every verification result identifies its evidence class; static/software evidence never substitutes for required bench or field evidence.

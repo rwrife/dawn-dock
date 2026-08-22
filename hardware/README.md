@@ -2,6 +2,8 @@
 
 ## System block description
 
+The normative editable system diagram, responsibility boundaries, provisional 5 V power allocation, and design gates live in [`docs/system-architecture.md`](../docs/system-architecture.md). The compact diagram below is only an overview.
+
 ```text
 Certified USB 5 V supply
           |
@@ -38,6 +40,7 @@ A less-integrated ESP32-S3 module plus separate display remains the fallback if 
 ## Power plan
 
 - External certified 5 V USB supply only.
+- The baseline device ceiling is 1.5 A (7.5 W) at 5 V with a certified external supply rated at least 2 A. This is a design allocation, not a module measurement.
 - Measure module peak current with display, audio, Wi-Fi, and BLE active before sizing connector/protection and any carrier regulation.
 - Add only datasheet-supported input protection/decoupling. Do not assume the development board's USB port may be back-powered through headers.
 - Document brownout behavior and confirm alarms/config survive expected power loss.
@@ -66,3 +69,5 @@ Planned real editable sources:
 - `hardware/kicad/dawn-dock.kicad_pcb`
 
 Expected evidence includes symbol properties with manufacturer/MPN/source data, annotated schematic, named nets, power/protection, connectors, programming/debug, test points, board outline, placement/routing, ground strategy, mounting, silkscreen, ERC/DRC reports, BOM export, and fabrication outputs. These artifacts have not been created yet.
+
+Requirements and their required evidence are tracked in [`hardware/requirements.md`](requirements.md) and [`docs/verification-matrix.md`](../docs/verification-matrix.md). The provisional module must pass issue #2 manufacturer-document and mechanical validation before schematic capture.

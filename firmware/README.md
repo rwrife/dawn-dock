@@ -2,6 +2,8 @@
 
 Status: plan only; no firmware source or build evidence exists yet.
 
+Normative behavior and boundaries are defined in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Firmware tests must trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
+
 ## Responsibilities
 
 - Maintain RTC/system time, timezone, DST data, and monotonic scheduling.
