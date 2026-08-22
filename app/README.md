@@ -2,6 +2,8 @@
 
 Status: plan only; no Flutter project or build evidence exists yet.
 
+Normative local-first/privacy boundaries are defined in [`docs/system-architecture.md`](../docs/system-architecture.md) and [`docs/threat-model.md`](../docs/threat-model.md). Alarm previews must implement [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), with evidence traced in [`docs/verification-matrix.md`](../docs/verification-matrix.md).
+
 ## Responsibilities
 
 - Discover or manually address a Dawn Dock on the local network/BLE.

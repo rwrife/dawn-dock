@@ -1,6 +1,6 @@
 # Dawn Dock device/app protocol draft
 
-Status: pre-implementation contract. Transport and cryptographic details require a threat-model spike and test evidence.
+Status: pre-implementation contract. Transport and cryptographic details require an implementation spike and test evidence. Security invariants are normative in [`threat-model.md`](threat-model.md); alarm behavior is normative in [`alarm-semantics.md`](alarm-semantics.md).
 
 ## Goals
 
@@ -40,6 +40,7 @@ Firmware exposes one transport-neutral service. The MVP may ship one transport f
 
 Rules:
 
+- The serialized envelope is at most 64 KiB; operations must define tighter collection/string/recurrence limits where practical.
 - Reject unknown major protocol versions, duplicate/replayed IDs, oversized frames, invalid timestamps where relevant, and malformed bodies.
 - Unknown optional fields may be ignored; unknown message types are errors.
 - `expectedRevision` prevents lost updates. Applying a schedule is atomic.

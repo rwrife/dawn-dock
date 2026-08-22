@@ -94,11 +94,24 @@ Final BOM data belongs in KiCad schematic symbol properties (`Manufacturer`, `MP
 - Audio output must be volume-limited and verified; the prototype is not a hearing or emergency alert device.
 - Bench, simulation, and static-analysis results must be labeled separately. An unbuilt prototype is never described as physically tested.
 
+## Architecture and verification baseline
+
+The v0.1 documentation baseline freezes downstream design constraints while keeping unverified performance explicit:
+
+- [System architecture and power allocation](docs/system-architecture.md)
+- [Deterministic alarm semantics](docs/alarm-semantics.md)
+- [MVP threat model](docs/threat-model.md)
+- [Risk register](docs/risk-register.md)
+- [Requirements verification matrix](docs/verification-matrix.md)
+- [Hardware and product requirements](hardware/requirements.md)
+
+The diagrams are editable Mermaid source. Results must be labeled as static analysis, simulation, software test, bench test, or field test; an absent physical test remains an open evidence gap.
+
 ## Current status and milestones
 
-**Status: concept and documentation scaffold only.** No schematic, PCB, production BOM, firmware, companion app, ERC/DRC report, fabrication output, enclosure, or physical test result exists yet.
+**Status: architecture/requirements baseline complete; implementation not started.** No schematic, PCB, production BOM, firmware, companion app, ERC/DRC report, fabrication output, enclosure, or physical test result exists yet. The provisional Waveshare module and all electrical/mechanical parts remain subject to issue #2 manufacturer-document validation.
 
-1. Freeze measurable requirements and perform risk review.
+1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
 2. Validate module/components against manufacturer documentation and create the KiCad source/BOM.
 3. Build and verify the carrier PCB and firmware clock/alarm core.
 4. Build the local-first companion and protocol.
@@ -108,7 +121,13 @@ See [PLAN.md](PLAN.md), [hardware/requirements.md](hardware/requirements.md), an
 
 ## Development quickstart
 
-The repository is documentation-only today. Planned tools:
+The repository is documentation-only today. After staging changes, check the index for required files, exact requirement-ID coverage, marker terms, and inline local path links with:
+
+```bash
+python3 scripts/check_docs.py
+```
+
+Planned implementation tools:
 
 - KiCad 9 or newer for editable schematic/PCB work and ERC/DRC.
 - ESP-IDF 5.x with CMake/Ninja for firmware.
