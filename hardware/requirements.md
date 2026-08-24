@@ -14,7 +14,7 @@ The word *target* defines an acceptance limit, not a measurement claim. Open dec
 | ELEC-01 | Input power | USB 5 V SELV only from a certified enclosed supply rated at least 2 A; no mains circuitry. Static schematic/BOM inspection plus assembled visual inspection. |
 | ELEC-02 | Peak input current | Device design ceiling 1.5 A (7.5 W) at 5 V. Replace provisional allocations with source-backed maxima, then measure idle, simultaneous display/radio/audio peak, and inrush at the device input. |
 | ELEC-03 | Brownout behavior | No undefined output state. Recover to validated time/schedule state, expose reset cause, and avoid duplicate ring side effects. Verify by host fixtures and controlled bench voltage sag/reset. |
-| ELEC-04 | Time retention | Maintain valid RTC time through at least 24 h main-power removal and report measured drift/interval. RTC/backup implementation is open pending issue #2 source review. |
+| ELEC-04 | Time retention | Maintain valid RTC time through at least 24 h main-power removal and report measured drift/interval. Selected DS3231MZ+ uses a replaceable CR2032 with no charge path; retention remains unverified until bench evidence exists. |
 | ELEC-05 | Alarm persistence | Committed schedule survives 100 controlled power cycles with no schema loss, partial update, or duplicate occurrence. Requires automated bench evidence plus storage fixtures. |
 | ELEC-06 | Controls | Dedicated snooze and brightness plus rotary navigation. One debounced action per gesture and valid-press response within 100 ms under normal load; verify with host and bench timing. |
 | ELEC-07 | Display dimming | Manual blackout without disabling alarms. Lowest non-black target ≤1 cd/m² normal to display in a dark room; measure candidate and change module/control path if unmet. |
@@ -63,7 +63,7 @@ The word *target* defines an acceptance limit, not a measurement claim. Open dec
 | CONN-02 | Pairing | Physical pairing window ≤120 s, unique device material, no universal credential, close after 5 failures; lockout never affects physical alarm controls. |
 | CONN-03 | Sync | Validate protocol major, ≤64 KiB envelope, operation limits, schema, nonce/message replay, and expected revision before atomic apply. |
 | CONN-04 | Failure isolation | Network, calendar, weather, discovery, and pairing failure cannot suppress or delay local alarm evaluation. Verify with overload/radio-loss software and bench tests. |
-| CONN-05 | Data minimization | Retain only fields needed for accepted alarms and minimal provenance. No account or telemetry; support local erase/export and selected-file import. |
+| CONN-05 | Data minimization | Retain only fields needed for accepted alarms and minimal provenance. No account, telemetry, microphone, or camera hardware; support local erase/export and selected-file import. |
 | CONN-06 | Recovery | Local factory reset requires a target 5 s physical gesture plus on-device confirmation. USB flash/recovery remains available without cloud service. |
 
 Security details and deferred cryptographic decisions are in [the threat model](../docs/threat-model.md).

@@ -63,7 +63,9 @@ Dawn Dock is a convenience appliance, not a life-safety or medical device. Users
 
 ## Hardware direction
 
-The module-first prototype uses a Waveshare ESP32-S3 3.5-inch touch-display development board as the controller/display candidate, with a low-complexity KiCad carrier for tactile controls, ambient-light sensing, audio connection, power/test access, and mounting. The candidate is not yet validated or locked. Manufacturer documentation and datasheets will be reviewed before schematic capture.
+The Rev A component gate selected an Espressif `ESP32-S3-DEVKITC-1-N8R8` controller, a separate Waveshare `29318` 3.5-inch capacitive-touch display, an Analog Devices `DS3231MZ+` RTC with a non-rechargeable CR2032, and a microphone-free MAX98357A audio path. A custom KiCad carrier will provide controls, sensing, protected USB-C input, test access, and mounting. The integrated Waveshare `ESP32-S3-Touch-LCD-3.5` candidate was rejected because it includes a fitted microphone and does not expose all required internal test nodes.
+
+The source-backed decision, dated price/availability snapshot, unresolved physical gates, and proposed GPIO map are in [component validation](docs/component-validation.md), [the preliminary BOM](bom/preliminary-bom.csv), and [the pin allocation](hardware/pin-allocation.csv).
 
 The planned editable design tree is:
 
@@ -104,16 +106,18 @@ The v0.1 documentation baseline freezes downstream design constraints while keep
 - [Risk register](docs/risk-register.md)
 - [Requirements verification matrix](docs/verification-matrix.md)
 - [Hardware and product requirements](hardware/requirements.md)
+- [Rev A component validation](docs/component-validation.md)
+- [Manufacturer/source manifest](docs/source-manifest.csv)
 
 The diagrams are editable Mermaid source. Results must be labeled as static analysis, simulation, software test, bench test, or field test; an absent physical test remains an open evidence gap.
 
 ## Current status and milestones
 
-**Status: architecture/requirements baseline complete; implementation not started.** No schematic, PCB, production BOM, firmware, companion app, ERC/DRC report, fabrication output, enclosure, or physical test result exists yet. The provisional Waveshare module and all electrical/mechanical parts remain subject to issue #2 manufacturer-document validation.
+**Status: requirements baseline and Rev A component selection complete; schematic implementation not started.** No schematic, PCB, production BOM, firmware, companion app, ERC/DRC report, fabrication output, enclosure, or physical test result exists yet. Component evidence authorizes schematic capture only; current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
 
 1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
-2. Validate module/components against manufacturer documentation and create the KiCad source/BOM.
-3. Build and verify the carrier PCB and firmware clock/alarm core.
+2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
+3. Create and verify the editable KiCad carrier and source-property BOM, then build the firmware clock/alarm core.
 4. Build the local-first companion and protocol.
 5. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
