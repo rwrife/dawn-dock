@@ -23,6 +23,7 @@ REQUIRED = {
     "docs/threat-model.md",
     "docs/risk-register.md",
     "docs/verification-matrix.md",
+    "docs/component-validation.md",
 }
 REQUIRED_TERMS = {
     "docs/system-architecture.md": ["```mermaid", "1,500 mA", "USB 5 V SELV"],
@@ -30,6 +31,12 @@ REQUIRED_TERMS = {
     "docs/threat-model.md": ["TM-01", "TM-14", "replay", "factory reset"],
     "docs/risk-register.md": ["R-001", "non-life-safety", "Verification method / evidence class"],
     "docs/verification-matrix.md": ["Static analysis", "Simulation", "Bench test", "Field test"],
+    "docs/component-validation.md": [
+        "approved for schematic capture",
+        "not approved for fabrication",
+        "microphone-free",
+        "still unverified",
+    ],
 }
 INLINE_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 REQUIREMENT_ID_RE = re.compile(r"^\|\s*([A-Z]+-\d{2})\s*\|", re.MULTILINE)

@@ -4,6 +4,8 @@ build/
 .flutter-plugins*
 .packages
 .pub-cache/
+__pycache__/
+*.py[cod]
 
 # KiCad working/backup files
 *.kicad_prl

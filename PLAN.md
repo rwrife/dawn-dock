@@ -16,10 +16,10 @@ The normative v0.1 design baseline is split into reviewable sources:
 
 ### Hardware
 
-- **Controller/display candidate:** Waveshare ESP32-S3-Touch-LCD-3.5 module, subject to datasheet and schematic review.
-- **Carrier PCB:** tactile snooze/brightness controls, rotary input, ambient-light sensor, audio/power interconnect, debug/test points, mounting, and protected external interfaces.
+- **Controller/display selection:** Espressif `ESP32-S3-DEVKITC-1-N8R8` plus Waveshare `29318` display. The integrated microphone-equipped board was rejected; see `docs/component-validation.md`.
+- **Carrier PCB:** protected power-only USB-C, DS3231MZ+ RTC/CR2032 backup, tactile snooze/brightness controls, rotary input, VEML7700 sensor, MAX98357A audio, debug/test pads, and mounting.
 - **Power:** certified external 5 V USB supply; no mains circuitry. Carrier power budget, inrush, ESD, connector rating, and brownout behavior must be measured.
-- **Timekeeping:** validate the module RTC and backup implementation; add or substitute a documented external RTC only if requirements are not met.
+- **Timekeeping:** selected DS3231MZ+ with replaceable non-rechargeable CR2032 and no charge path; retention/drift remain bench gates.
 - **Enclosure:** printable or laser-cut bedside enclosure with strain relief, ventilation, accessible controls, and serviceable fasteners.
 
 ### Firmware
@@ -54,7 +54,7 @@ The normative v0.1 design baseline is split into reviewable sources:
 ## Milestones and dependency order
 
 1. **Requirements and risk baseline (v0.1 complete)** — alarm behavior, brightness/acoustic targets, 1.5 A power envelope, mechanical limits, threat model, risk register, privacy, accessibility, and safety exclusions are frozen. Component capability and all physical performance remain unverified.
-2. **Component validation and architecture proof** — collect manufacturer docs, compare display/RTC/audio options, measure module behavior, and record MPN/manufacturer fields.
+2. **Component validation and architecture proof (static selection complete)** — manufacturer documents, comparison, GPIO map, dated sourcing snapshot, and physical evidence gaps recorded. Measurements remain in integration/bring-up.
 3. **Editable KiCad carrier and BOM** — complete schematic, ERC, layout, DRC, source-property BOM export, and review evidence.
 4. **Firmware core** — deterministic alarm engine, persistence, RTC/timezone handling, controls, UI, diagnostics, recovery, build/tests.
 5. **Companion and protocol** — pairing, local schedule model, diff/apply, import/export, accessibility, build/tests.

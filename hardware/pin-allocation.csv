@@ -1,0 +1,38 @@
+Subsystem,Function,Net,ESP32-S3 GPIO,DevKit header pin,Direction,Voltage domain,Shared bus or conflict rule,Required test access,Evidence basis
+Power,Protected system input,+5V_SYS,,J1-21 (5V),power,5 V,"Carrier drives this pin after USB4105/TPS259531; DevKit USB VBUS is isolated by onboard D1; no other 5 V source",TP_5V_SYS,Espressif v1.1 user guide and schematic
+Power,Logic rail,+3V3,,J1-1/J1-2,power,3.3 V,"DevKit regulated output; load budget must remain within regulator and thermal limits",TP_3V3,Espressif v1.1 user guide and schematic
+Power,Ground,GND,,J1-22/J3-1/J3-21/J3-22,power,0 V,Continuous return plane,TP_GND,Espressif v1.1 user guide
+Display,Display SPI clock,TFT_SCLK,12,J1-18,output,3.3 V,Keep short and route over solid ground,TP_TFT_SCLK,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Display SPI data out,TFT_MOSI,11,J1-17,output,3.3 V,Keep short and route over solid ground,TP_TFT_MOSI,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Display SPI data in,TFT_MISO,13,J1-19,input,3.3 V,Shared only with optional display microSD,TP_TFT_MISO,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Display chip select,TFT_CS,10,J1-16,output,3.3 V,Dedicated active-low chip select,TP_TFT_CS,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Display data-command,TFT_DC,14,J1-20,output,3.3 V,Dedicated,TP_TFT_DC,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Display reset,TFT_RST,21,J3-18,output,3.3 V,Dedicated; define reset default,TP_TFT_RST,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Display,Backlight PWM,LCD_BL,6,J1-6,output,3.3 V,Dedicated PWM; default off/dim with hardware bias,TP_LCD_BL,Waveshare SKU 29318 wiki plus ESP32-S3 LEDC capability
+Display,MicroSD chip select,SD_CS,39,J3-9,output,3.3 V,Reserved and held inactive unless removable storage is implemented,TP_SD_CS,Waveshare SKU 29318 wiki plus ESP32-S3 GPIO matrix
+Shared I2C,I2C data,I2C_SDA,8,J1-12,bidirectional,3.3 V,"Shared by touch 0x38; ambient sensor 0x10; RTC 0x68; verify total pull-ups",TP_I2C_SDA,Three peripheral datasheets plus ESP32-S3 GPIO matrix
+Shared I2C,I2C clock,I2C_SCL,9,J1-15,output/open-drain,3.3 V,"Shared by touch; ambient sensor; RTC; target 400 kHz only after rise-time check",TP_I2C_SCL,Three peripheral datasheets plus ESP32-S3 GPIO matrix
+Touch,Touch interrupt,TP_INT,47,J3-17,input,3.3 V,Dedicated interrupt; confirm polarity/pull-up from FT6336U source,TP_TOUCH_INT,Waveshare SKU 29318 wiki
+Touch,Touch reset,TP_RST,42,J3-6,output,3.3 V,Dedicated; confirm reset timing from FT6336U source,TP_TOUCH_RST,Waveshare SKU 29318 wiki
+RTC,Alarm/square-wave interrupt,RTC_INT_N,2,J3-5,input,3.3 V,Dedicated open-drain interrupt with pull-up,TP_RTC_INT,Analog Devices DS3231M datasheet
+Ambient sensor,Sensor interrupt,ALS_INT,1,J3-4,input,3.3 V,Dedicated optional interrupt; may be DNP/not used in first firmware,TP_ALS_INT,Vishay VEML7700 datasheet
+Audio,I2S bit clock,I2S_BCLK,16,J1-9,output,3.3 V,Dedicated digital audio,TP_I2S_BCLK,MAX98357A/Adafruit 3006 documentation
+Audio,I2S word select,I2S_LRCLK,17,J1-10,output,3.3 V,Dedicated digital audio,TP_I2S_LRCLK,MAX98357A/Adafruit 3006 documentation
+Audio,I2S data out,I2S_DOUT,18,J1-11,output,3.3 V,Dedicated digital audio,TP_I2S_DOUT,MAX98357A/Adafruit 3006 documentation
+Audio,Amplifier shutdown,AMP_SD,40,J3-8,output,3.3 V,Dedicated; hardware pull-down keeps amplifier off during reset,TP_AMP_SD,MAX98357A/Adafruit 3006 documentation
+Controls,Encoder phase A,ENC_A,4,J1-4,input,3.3 V,Post-U3 Schmitt output; raw encoder contact is 5V wetted and individually pulled down,TP_ENC_A,Bourns PEC11R and TI SN74LVC14A datasheets
+Controls,Encoder phase B,ENC_B,5,J1-5,input,3.3 V,Post-U3 Schmitt output; raw encoder contact is 5V wetted and individually pulled down,TP_ENC_B,Bourns PEC11R and TI SN74LVC14A datasheets
+Controls,Encoder push switch,ENC_SW,7,J1-7,input,3.3 V,Post-U3 Schmitt output; raw switch contact is 5V wetted and individually pulled down,TP_ENC_SW,Bourns PEC11R and TI SN74LVC14A datasheets
+Controls,Snooze switch,SNOOZE_N,15,J1-8,input,3.3 V,Post-U3 active-low output; raw switch is 5V wetted; large top actuator,TP_SNOOZE,Omron B3F and TI SN74LVC14A datasheets
+Controls,Brightness switch,BRIGHTNESS_N,41,J3-7,input,3.3 V,Post-U3 active-low output; raw switch is 5V wetted; separated side/rear actuator,TP_BRIGHTNESS,Omron B3F and TI SN74LVC14A datasheets
+Service,UART0 transmit,U0TXD,43,J3-2,output,3.3 V,Reserved for service console; not a user connector,TP_U0TXD,Espressif v1.1 user guide
+Service,UART0 receive,U0RXD,44,J3-3,input,3.3 V,Reserved for service console; not a user connector,TP_U0RXD,Espressif v1.1 user guide
+Service,Native USB D-,USB_D-,19,J3-20,bidirectional,USB,Reserved for native USB; no carrier load,DevKit service connector only,Espressif v1.1 user guide
+Service,Native USB D+,USB_D+,20,J3-19,bidirectional,USB,Reserved for native USB; no carrier load,DevKit service connector only,Espressif v1.1 user guide
+Service,Reset,CHIP_PU,,J1-3,input,3.3 V,Reserved reset; add named pad,TP_EN,Espressif v1.1 user guide
+Reserved,Boot strap,GPIO0,0,J3-14,input/output,3.3 V,Do not allocate to application controls,DevKit BOOT button,Espressif ESP32-S3 datasheet and user guide
+Reserved,Strapping pin,GPIO3,3,J1-13,input/output,3.3 V,Do not allocate in Rev A,No carrier connection,Espressif ESP32-S3 datasheet
+Reserved,Strapping pin,GPIO45,45,J3-15,input/output,3.3 V,Do not allocate in Rev A,No carrier connection,Espressif ESP32-S3 datasheet
+Reserved,Strapping pin,GPIO46,46,J1-14,input/output,3.3 V,Do not allocate in Rev A,No carrier connection,Espressif ESP32-S3 datasheet
+Reserved,Onboard RGB LED,GPIO38,38,J3-10,input/output,3.3 V,Leave unused by Dawn Dock to avoid LED contention,No carrier connection,Espressif v1.1 user guide
+Unavailable,N8R8 octal PSRAM/flash,GPIO35/36/37,35/36/37,J3-13/J3-12/J3-11,unavailable,3.3 V,N8R8 variant reserves these pins; never connect,No carrier connection,Espressif ordering-code and module documentation
