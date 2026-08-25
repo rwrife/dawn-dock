@@ -64,7 +64,7 @@ The alarm evaluator, committed schedule, valid time source, local controls, disp
 
 ## Preliminary 5 V power allocation
 
-This is a **design envelope**, not a measurement or a pass. The Rev A components are selected, but issue #3 must replace each allocation with datasheet-backed calculations and bring-up must measure idle, inrush, and simultaneous display/radio/audio peaks.
+This is a **design envelope**, not a measurement or a pass. The Rev A schematic now captures the eFuse limit/ramp calculations; bring-up must still measure idle, inrush, and simultaneous display/radio/audio peaks on identified hardware.
 
 | Load/reserve | Worst-case allocation at 5 V | Basis and required follow-up |
 |---|---:|---|
@@ -79,7 +79,7 @@ Power decisions:
 
 - Use a certified enclosed 5 V supply rated at **at least 2 A**; the US planning selection is Raspberry Pi `SC0218` (5.1 V, 3 A).
 - Use a power-only GCT `USB4105-GF-A` input with independent 5.1 kΩ CC resistors, LRC `LESD8LH5.0CT5G` VBUS TVS, and TI `TPS259531DSGR` eFuse.
-- Use Yageo `RC0603FR-071K53L` (1.53 kΩ, 1%) at ILM. The TPS2595 equation gives about 1.347 A nominal; a conservative combination of +7.5% current-limit error and -1% resistor tolerance is about 1.463 A, below the 1.5 A ceiling. Recalculate against the current datasheet in issue #3.
+- Use Yageo `RC0603FR-071K53L` (1.53 kΩ, 1%) at ILM. TI SLVSE57C equation 4 gives about 1.347 A nominal; a conservative combination of +7.5% current-limit error and -1% resistor tolerance is about 1.463 A, below the 1.5 A ceiling. The schematic also uses 100 nF at dVdt (about 0.42 V/ms and 11.9 ms to 5 V); received module capacitance and inrush remain bench gates.
 - Feed the DevKit 5 V header from the protected rail. The official v1.1 schematic's USB Schottky is the anti-backfeed boundary; unverified clone boards are not substitutions.
 - Rate connector, protection path, and carrier copper for the 1.5 A ceiling and verify the eFuse exposed-pad thermal implementation.
 - Bench acceptance measures input voltage, each generated rail, idle current, peak current with display + radios + maximum permitted audio active, inrush, and reset/brownout recovery.

@@ -20,6 +20,40 @@ jobs:
         run: python3 scripts/check_docs.py
       - name: Validate component selection artifacts
         run: python3 scripts/check_component_selection.py
+
+      - name: Build KiCad 9 verifier
+        run: docker build -t dawn-kicad-verify -f hardware/kicad/Dockerfile.verify hardware/kicad
+      - name: Derive and validate schematic evidence
+        run: |
+          mkdir -p "$RUNNER_TEMP/dawn-kicad"
+          docker run --rm \
+            -e KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
+            -e KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+            -v "$PWD:/work" -v "$RUNNER_TEMP/dawn-kicad:/out" \
+            -w /work/hardware/kicad dawn-kicad-verify \
+            sch erc --output /out/erc.rpt --exit-code-violations dawn-dock.kicad_sch
+          docker run --rm \
+            -e KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
+            -e KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+            -v "$PWD:/work" -v "$RUNNER_TEMP/dawn-kicad:/out" \
+            -w /work/hardware/kicad dawn-kicad-verify \
+            sch export netlist --output /out/dawn-dock.net dawn-dock.kicad_sch
+          docker run --rm \
+            -e KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
+            -e KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+            -v "$PWD:/work" -v "$RUNNER_TEMP/dawn-kicad:/out" \
+            -w /work/hardware/kicad dawn-kicad-verify \
+            sch export bom dawn-dock.kicad_sch --output /out/bom.csv \
+            --fields 'Reference,${QUANTITY},Value,Footprint,Manufacturer,MPN,Supplier,Supplier PN,Estimated Unit Cost USD,Price Observed UTC,BOM Comments,${DNP}' \
+            --labels 'Reference,Qty,Value,Footprint,Manufacturer,MPN,Supplier,Supplier_PN,Estimated_Unit_Cost_USD,Price_Observed_UTC,Notes,DNP' \
+            --group-by 'Value,Footprint,Manufacturer,MPN,Supplier,Supplier PN,Estimated Unit Cost USD,Price Observed UTC,BOM Comments,${DNP}' \
+            --sort-field Reference --sort-asc
+          cmp bom/bom.csv "$RUNNER_TEMP/dawn-kicad/bom.csv"
+          python3 hardware/kicad/validate_hardware.py \
+            --netlist "$RUNNER_TEMP/dawn-kicad/dawn-dock.net" \
+            --bom "$RUNNER_TEMP/dawn-kicad/bom.csv" \
+            --erc "$RUNNER_TEMP/dawn-kicad/erc.rpt" \
+            --output "$RUNNER_TEMP/dawn-kicad/hardware-validation.json"
       - name: Reject whitespace errors
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}

@@ -15,7 +15,7 @@ Shared I2C,I2C clock,I2C_SCL,9,J1-15,output/open-drain,3.3 V,"Shared by touch; a
 Touch,Touch interrupt,TP_INT,47,J3-17,input,3.3 V,Dedicated interrupt; confirm polarity/pull-up from FT6336U source,TP_TOUCH_INT,Waveshare SKU 29318 wiki
 Touch,Touch reset,TP_RST,42,J3-6,output,3.3 V,Dedicated; confirm reset timing from FT6336U source,TP_TOUCH_RST,Waveshare SKU 29318 wiki
 RTC,Alarm/square-wave interrupt,RTC_INT_N,2,J3-5,input,3.3 V,Dedicated open-drain interrupt with pull-up,TP_RTC_INT,Analog Devices DS3231M datasheet
-Ambient sensor,Sensor interrupt,ALS_INT,1,J3-4,input,3.3 V,Dedicated optional interrupt; may be DNP/not used in first firmware,TP_ALS_INT,Vishay VEML7700 datasheet
+Ambient sensor,Reserved future interrupt,ALS_INT,1,J3-4,NC,3.3 V,Adafruit 4162 exposes VIN 3Vo GND SCL SDA only; GPIO1 remains unconnected in Rev A,No test pad until a source-backed module revision exposes INT,Adafruit 4162 pinout
 Audio,I2S bit clock,I2S_BCLK,16,J1-9,output,3.3 V,Dedicated digital audio,TP_I2S_BCLK,MAX98357A/Adafruit 3006 documentation
 Audio,I2S word select,I2S_LRCLK,17,J1-10,output,3.3 V,Dedicated digital audio,TP_I2S_LRCLK,MAX98357A/Adafruit 3006 documentation
 Audio,I2S data out,I2S_DOUT,18,J1-11,output,3.3 V,Dedicated digital audio,TP_I2S_DOUT,MAX98357A/Adafruit 3006 documentation

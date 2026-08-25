@@ -1,0 +1,16 @@
+{
+  "board": {},
+  "boards": [],
+  "cvpcb": {},
+  "erc": {
+    "erc_exclusions": [],
+    "meta": {"version": 0},
+    "rule_severities": {}
+  },
+  "libraries": {},
+  "meta": {"filename": "dawn-dock.kicad_pro", "version": 1},
+  "net_settings": {"classes": [], "meta": {"version": 3}},
+  "pcbnew": {},
+  "schematic": {},
+  "text_variables": {}
+}

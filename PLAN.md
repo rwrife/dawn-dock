@@ -55,7 +55,7 @@ The normative v0.1 design baseline is split into reviewable sources:
 
 1. **Requirements and risk baseline (v0.1 complete)** — alarm behavior, brightness/acoustic targets, 1.5 A power envelope, mechanical limits, threat model, risk register, privacy, accessibility, and safety exclusions are frozen. Component capability and all physical performance remain unverified.
 2. **Component validation and architecture proof (static selection complete)** — manufacturer documents, comparison, GPIO map, dated sourcing snapshot, and physical evidence gaps recorded. Measurements remain in integration/bring-up.
-3. **Editable KiCad carrier and BOM** — complete schematic, ERC, layout, DRC, source-property BOM export, and review evidence.
+3. **Editable KiCad carrier and BOM (schematic gate complete)** — editable schematic, native ERC, analyzer evidence, source-property BOM export, and review report are complete; PCB layout, DRC, cross-analysis, and fabrication evidence remain pending.
 4. **Firmware core** — deterministic alarm engine, persistence, RTC/timezone handling, controls, UI, diagnostics, recovery, build/tests.
 5. **Companion and protocol** — pairing, local schedule model, diff/apply, import/export, accessibility, build/tests.
 6. **Integration and bring-up** — assemble, measure rails/current/audio/brightness/time retention, exercise offline and DST cases, and document troubleshooting.

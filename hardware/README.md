@@ -65,14 +65,17 @@ The first assembled revision should use through-hole controls and module sockets
 - Limit acoustic output; prolonged loud sound near the bed is not an MVP goal.
 - Keep the enclosure away from liquids and fabrics that block ventilation.
 
-## Expected KiCad deliverables
+## KiCad deliverables
 
-Planned real editable sources:
+Current editable sources:
 
 - `hardware/kicad/dawn-dock.kicad_pro`
 - `hardware/kicad/dawn-dock.kicad_sch`
-- `hardware/kicad/dawn-dock.kicad_pcb`
+- project-local custom symbol and footprint libraries under `hardware/kicad/lib/`
+- deterministic generator, source-property BOM, native ERC report, analyzer output, and project-specific validation report
 
-Expected evidence includes symbol properties with manufacturer/MPN/source data, annotated schematic, named nets, power/protection, connectors, programming/debug, test points, board outline, placement/routing, ground strategy, mounting, silkscreen, ERC/DRC reports, BOM export, and fabrication outputs. These artifacts have not been created yet. `bom/preliminary-bom.csv` is planning input and is not the final KiCad-derived BOM.
+The schematic evidence includes symbol properties with manufacturer/MPN/source/cost-date data, named nets, power/protection, module connectors, reset/boot/UART access, 30 named test points, four mounting-hole symbols, native ERC, analyzer output, and `bom/bom.csv` exported directly from KiCad properties. `bom/preliminary-bom.csv` remains the selection input; it is not the final electrical BOM.
 
-Requirements and their required evidence are tracked in [`requirements.md`](requirements.md) and [`docs/verification-matrix.md`](../docs/verification-matrix.md). Issue #2 closes the source-review gate for schematic capture only; PCB outline, enclosure fit, and all physical performance still require later evidence.
+The PCB, board outline, placement/routing, ground strategy, antenna keepout, silkscreen, DRC, Gerbers, CPL, and fabrication outputs do not exist yet. See [`kicad/README.md`](kicad/README.md) for rebuild/verification commands and exact evidence gaps.
+
+Requirements and their required evidence are tracked in [`requirements.md`](requirements.md) and [`docs/verification-matrix.md`](../docs/verification-matrix.md). The schematic closes only the static capture/ERC/BOM gate; PCB outline, enclosure fit, assembly, and all physical performance still require later evidence.
