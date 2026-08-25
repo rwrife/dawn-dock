@@ -63,21 +63,21 @@ Dawn Dock is a convenience appliance, not a life-safety or medical device. Users
 
 ## Hardware direction
 
-The Rev A component gate selected an Espressif `ESP32-S3-DEVKITC-1-N8R8` controller, a separate Waveshare `29318` 3.5-inch capacitive-touch display, an Analog Devices `DS3231MZ+` RTC with a non-rechargeable CR2032, and a microphone-free MAX98357A audio path. A custom KiCad carrier will provide controls, sensing, protected USB-C input, test access, and mounting. The integrated Waveshare `ESP32-S3-Touch-LCD-3.5` candidate was rejected because it includes a fitted microphone and does not expose all required internal test nodes.
+The Rev A component gate selected an Espressif `ESP32-S3-DEVKITC-1-N8R8` controller, a separate Waveshare `29318` 3.5-inch capacitive-touch display, an Analog Devices `DS3231MZ+` RTC with a non-rechargeable CR2032, and a microphone-free MAX98357A audio path. The editable KiCad carrier schematic now provides controls, sensing, protected USB-C input, test access, and mounting intent. The integrated Waveshare `ESP32-S3-Touch-LCD-3.5` candidate was rejected because it includes a fitted microphone and does not expose all required internal test nodes.
 
 The source-backed decision, dated price/availability snapshot, unresolved physical gates, and proposed GPIO map are in [component validation](docs/component-validation.md), [the preliminary BOM](bom/preliminary-bom.csv), and [the pin allocation](hardware/pin-allocation.csv).
 
-The planned editable design tree is:
+The editable design tree is:
 
 ```text
 hardware/kicad/dawn-dock.kicad_pro
 hardware/kicad/dawn-dock.kicad_sch
-hardware/kicad/dawn-dock.kicad_pcb
+hardware/kicad/dawn-dock.kicad_pcb  # planned in issue #4; not present yet
 ```
 
-Those KiCad files do **not** exist yet. They must be real editable sources, pass documented ERC/DRC review, and remain the design source of truth. Image exports and PDFs may supplement but never replace them.
+The project and schematic exist and remain the design source of truth; the PCB does not yet exist. The schematic passes documented native ERC. The future PCB must pass DRC and cross-analysis before fabrication. PDF exports supplement but never replace editable sources.
 
-Final BOM data belongs in KiCad schematic symbol properties (`Manufacturer`, `MPN`, supplier fields, notes) and is exported to `bom/bom.csv`. The current `bom/preliminary-bom.csv` is planning input only and must not be treated as validated purchasing data.
+Final electrical BOM data lives in KiCad schematic symbol properties (`Manufacturer`, `MPN`, supplier fields, notes) and is exported to `bom/bom.csv`. `bom/preliminary-bom.csv` is planning input/history, not the final electrical BOM.
 
 ## Privacy, permissions, and storage
 
@@ -108,28 +108,35 @@ The v0.1 documentation baseline freezes downstream design constraints while keep
 - [Hardware and product requirements](hardware/requirements.md)
 - [Rev A component validation](docs/component-validation.md)
 - [Manufacturer/source manifest](docs/source-manifest.csv)
+- [Editable KiCad schematic, build, and verification](hardware/kicad/README.md)
+- [Rev A schematic static review](docs/schematic-review.md)
 
 The diagrams are editable Mermaid source. Results must be labeled as static analysis, simulation, software test, bench test, or field test; an absent physical test remains an open evidence gap.
 
 ## Current status and milestones
 
-**Status: requirements baseline and Rev A component selection complete; schematic implementation not started.** No schematic, PCB, production BOM, firmware, companion app, ERC/DRC report, fabrication output, enclosure, or physical test result exists yet. Component evidence authorizes schematic capture only; current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
+**Status: requirements, Rev A component selection, and editable carrier schematic complete; PCB/layout and physical evidence not started.** The KiCad 9 schematic has a clean native ERC report, static analyzer output, named test access, and a source-property BOM. No PCB, firmware, companion app, DRC/fabrication output, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
 
 1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
 2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
-3. Create and verify the editable KiCad carrier and source-property BOM, then build the firmware clock/alarm core.
-4. Build the local-first companion and protocol.
-5. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
+3. **Editable carrier schematic complete** — native ERC 0 errors/0 warnings, analyzer evidence, critical pin mapping, and KiCad-derived BOM are committed.
+4. Create and verify the carrier PCB/layout, then build the firmware clock/alarm core.
+5. Build the local-first companion and protocol.
+6. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
 See [PLAN.md](PLAN.md), [hardware/requirements.md](hardware/requirements.md), and the issue backlog.
 
 ## Development quickstart
 
-The repository is documentation-only today. After staging changes, check the index for required files, exact requirement-ID coverage, marker terms, and inline local path links with:
+Validate documentation, selected components, and committed schematic evidence with:
 
 ```bash
 python3 scripts/check_docs.py
+python3 scripts/check_component_selection.py
 ```
+
+The hardware validator intentionally requires fresh KiCad-derived inputs; use
+the complete command sequence in [`hardware/kicad/README.md`](hardware/kicad/README.md).
 
 Planned implementation tools:
 
@@ -138,4 +145,4 @@ Planned implementation tools:
 - Flutter stable for Android, iOS, Windows, and macOS companion targets.
 - Python 3 for protocol fixtures and hardware-independent integration tests.
 
-Once skeletons land, exact bootstrap commands and pinned versions will be recorded here. Until then, there is no honest build command to run.
+See [`hardware/kicad/README.md`](hardware/kicad/README.md) for the pinned schematic generator, KiCad 9 ERC/BOM/PDF commands, evidence limits, and unresolved physical gates. Firmware and companion build commands remain future work.

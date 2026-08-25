@@ -1,0 +1,24 @@
+{
+  "status": "pass",
+  "evidence_class": "static_analysis",
+  "schematic": "hardware/kicad/dawn-dock.kicad_sch",
+  "bom_rows": 32,
+  "bom_component_quantity": 37,
+  "netlist_connected_components": 67,
+  "netlist_nets": 66,
+  "required_nets_checked": 36,
+  "critical_pin_mappings_checked": 17,
+  "connectivity_source": "dawn-dock.net",
+  "bom_source": "bom.csv",
+  "erc_source": "erc.rpt",
+  "fresh_inputs_required": true,
+  "native_erc": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "intentional_dnp": [
+    "R8,R9"
+  ],
+  "physical_tests_performed": false,
+  "errors": []
+}

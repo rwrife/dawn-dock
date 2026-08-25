@@ -1,0 +1,122 @@
+=== Design Analysis ===
+
+--- audio ---
+  [1] INFO AU-DET: Audio amplifier A2 (MAX98357A I2S AMP) [class_d/i2s]
+      Detail: Detected class_d audio amplifier IC A2.
+      Component: A2
+      Stages: schematic
+
+--- certification ---
+  [2] INFO CERT-001: Wireless module detected: A1
+      Detail: FCC Part 15: Wireless module detected: A1
+      Stages: schematic
+
+--- component_derating ---
+  [3] INFO VD-004: C2 (100nF 50V X7R) is over-designed for VBUS (50V on 5.0V rail)
+      Detail: 50V-rated capacitor on a 5.0V rail — margin 90.0%.
+      Fix:    Consider 16V rating — 50V is significantly over-designed for a 5.0V rail
+      Stages: schematic
+  [4] INFO VD-004: C5 (100nF 50V X7R) is over-designed for +5V_SYS (50V on 5.0V rail)
+      Detail: 50V-rated capacitor on a 5.0V rail — margin 90.0%.
+      Fix:    Consider 16V rating — 50V is significantly over-designed for a 5.0V rail
+      Stages: schematic
+  [5] INFO VD-004: C7 (100nF 50V X7R) is over-designed for +3V3 (50V on 3.3V rail)
+      Detail: 50V-rated capacitor on a 3.3V rail — margin 93.4%.
+      Fix:    Consider 10V rating — 50V is significantly over-designed for a 3.3V rail
+      Stages: schematic
+  [6] INFO VD-004: C8 (100nF 50V X7R) is over-designed for +3V3 (50V on 3.3V rail)
+      Detail: 50V-rated capacitor on a 3.3V rail — margin 93.4%.
+      Fix:    Consider 10V rating — 50V is significantly over-designed for a 3.3V rail
+      Stages: schematic
+
+--- decoupling ---
+  [7] INFO DC-DET: Decoupling on VBUS
+      Detail: Decoupling capacitors on power rail VBUS
+      Stages: schematic, layout
+  [8] INFO DC-DET: Decoupling on +5V_SYS
+      Detail: Decoupling capacitors on power rail +5V_SYS
+      Stages: schematic, layout
+  [9] INFO DC-DET: Decoupling on +3V3
+      Detail: Decoupling capacitors on power rail +3V3
+      Stages: schematic, layout
+  [10] INFO DO-DET: IC U1 missing decoupling on VBAT_RTC
+      Detail: IC power pin(s) without decoupling capacitors
+      Component: U1
+      Stages: schematic
+
+--- decoupling_coverage ---
+  [11] INFO DO-DET: Decoupling coverage on VBUS
+      Detail: Decoupling frequency coverage for rail VBUS
+      Stages: schematic
+  [12] INFO DO-DET: Decoupling coverage on +5V_SYS
+      Detail: Decoupling frequency coverage for rail +5V_SYS
+      Stages: schematic
+  [13] INFO DO-DET: Decoupling coverage on +3V3
+      Detail: Decoupling frequency coverage for rail +3V3
+      Stages: schematic
+
+--- i2c_bus ---
+  [14] INFO DO-DET: I2C SCL bus on I2C_SCL
+      Detail: I2C SCL bus detected with 3 device(s)
+      Stages: schematic
+  [15] INFO DO-DET: I2C SDA bus on I2C_SDA
+      Detail: I2C SDA bus detected with 3 device(s)
+      Stages: schematic
+
+--- lifecycle ---
+  [16] INFO LC-007: Lifecycle audit not run — --lifecycle flag not passed
+      Detail: Component lifecycle / obsolescence audit was not run this session. Reason: --lifecycle flag not passed (run with --lifecycle to query DigiKey / Mouser / LCSC / element14 for obsolescence + operating-temp coverage; requires network + API keys). The review cannot report active / NRND / EOL / obsolete status, last-time-buy windows, or operating-temperature coverage for any BOM part. Treat the lifecycle section of the report as 'not performed'.
+      Fix:    Run with --lifecycle (requires DIGIKEY_CLIENT_ID / MOUSER_SEARCH_API_KEY / ELEMENT14_API_KEY env vars; LCSC needs no auth) to populate this section. If intentionally skipped, note it explicitly in the report's 'Not Performed' section.
+      Stages: schematic
+
+--- power_integrity ---
+  [17] INFO PS-001: Regulator U2: PG status unknown for TPS259531DSGR (no datasheet extraction)
+      Detail: Regulator U2 (TPS259531DSGR) supplies +5V_SYS to A1 but PG status is unknown. Run sync_datasheets to verify.
+      Fix:    Run sync_datasheets to verify whether TPS259531DSGR has a PG pin.
+      Stages: schematic
+
+--- power_management ---
+  [18] INFO PR-DET: Regulator U2 LDO
+      Detail: Power regulator (LDO) detected
+      Component: U2
+      Stages: schematic
+
+--- protection ---
+  [19] INFO EP-AUD: ESD audit J1 (usb): none coverage
+      Detail: ESD protection audit for usb connector J1: none coverage.
+      Stages: schematic
+  [20] INFO PD-DET: Protection D1 diode
+      Detail: Protection device (diode) on VBUS
+      Component: D1
+      Stages: schematic
+
+--- signal_integrity ---
+  [21] INFO LS-DET: Level shifter U3 (SN74LVC14APWR) [unidirectional]
+      Detail: Detected unidirectional level shifter IC U3.
+      Component: U3
+      Stages: schematic
+  [22] ERROR VM-001: Net I2C_SCL: 5.0V / 3.3V domain crossing without level shifter
+      Detail: Net I2C_SCL connects ICs in 5.0V and 3.3V domains. The 5.0V output may exceed the 3.3V input absolute maximum rating of 3.6V, risking damage.
+      Fix:    Add a level shifter between the 5.0V and 3.3V domains on net I2C_SCL, or verify that the connected ICs have tolerant inputs.
+      Stages: schematic
+  [23] ERROR VM-001: Net I2C_SDA: 5.0V / 3.3V domain crossing without level shifter
+      Detail: Net I2C_SDA connects ICs in 5.0V and 3.3V domains. The 5.0V output may exceed the 3.3V input absolute maximum rating of 3.6V, risking damage.
+      Fix:    Add a level shifter between the 5.0V and 3.3V domains on net I2C_SDA, or verify that the connected ICs have tolerant inputs.
+      Stages: schematic
+  [24] ERROR VM-001: Net RTC_INT_N: 5.0V / 3.3V domain crossing without level shifter
+      Detail: Net RTC_INT_N connects ICs in 5.0V and 3.3V domains. The 5.0V output may exceed the 3.3V input absolute maximum rating of 3.6V, risking damage.
+      Fix:    Add a level shifter between the 5.0V and 3.3V domains on net RTC_INT_N, or verify that the connected ICs have tolerant inputs.
+      Stages: schematic
+
+--- timing ---
+  [25] INFO RT-DET: RTC U1 (DS3231MZ+) [i2c]
+      Detail: Detected RTC IC U1.
+      Component: U1
+      Stages: schematic
+
+--- wireless ---
+  [26] INFO WL-001: wifi/ble module A1 (ESP32-S3-DEVKITC-1-N8R8)
+      Detail: Detected wifi_ble wireless module A1 (ESP32-S3-DEVKITC-1-N8R8).
+      Stages: schematic, bring_up
+
+Total: 26 (3 errors, 0 warnings, 23 info)

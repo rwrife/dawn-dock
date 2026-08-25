@@ -128,7 +128,7 @@ Design rules for issue #3:
 1. Use the USB-C receptacle as a **5 V sink only**. Leave D+/D- unconnected and expose no USB-PD negotiation.
 2. Use two independent 5.1 kΩ, 1% CC pull-downs (`RC0603FR-075K1L`) and keep D+/D- unconnected.
 3. Place `LESD8LH5.0CT5G` from VBUS to the shortest available ground return at the inlet.
-4. Feed VBUS through `TPS259531DSGR`. Use `RC0603FR-071K53L` (1.53 kΩ, 1%) at ILM: TI equation 4 gives about 1.347 A nominal; combining +7.5% current-limit error and -1% resistor tolerance conservatively gives about 1.463 A. Issue #3 must re-run that calculation, choose dV/dt/output capacitance, and perform the thermal review.
+4. Feed VBUS through `TPS259531DSGR`. Use `RC0603FR-071K53L` (1.53 kΩ, 1%) at ILM: TI equation 4 gives about 1.347 A nominal; combining +7.5% current-limit error and -1% resistor tolerance conservatively gives about 1.463 A. The Rev A schematic repeats that calculation and uses 100 nF dVdt with 10 µF ceramic plus 470 µF electrolytic output bulk; PCB thermal implementation and measured module inrush remain open.
 5. Route at least the controller, display/backlight, amplifier, and peripheral branches separately from the protected 5 V node so each can be measured.
 6. Do not treat adapter capability (5.1 V, 3 A) as permission for the product to draw 3 A; the carrier limit remains below 1.5 A.
 7. Put the two DevKit USB connectors behind a service opening. The enclosure's user-facing inlet is the protected carrier USB-C.
@@ -190,8 +190,8 @@ The planning subtotal is approximately **$87 before tax and shipping**, about **
 - EMC/ESD performance of the assembled carrier and enclosure.
 - Supplier stock, price, and lifecycle at order time.
 
-## Handoff to schematic and bring-up
+## Schematic result and handoff to PCB/bring-up
 
-Issue #3 may begin schematic capture with this selection and [`hardware/pin-allocation.csv`](../hardware/pin-allocation.csv). It must add Manufacturer, MPN, supplier, datasheet, and BOM-note properties to every KiCad symbol and export `bom/bom.csv` from the schematic. The present CSV is planning data only.
+Issue #3 produced the editable KiCad schematic using this selection and [`hardware/pin-allocation.csv`](../hardware/pin-allocation.csv). Manufacturer, MPN, supplier, datasheet, dated cost, and BOM-note properties are stored on electrical BOM symbols; [`bom/bom.csv`](../bom/bom.csv) is exported from those properties. The preliminary CSV remains planning/history data only. See [`schematic-review.md`](schematic-review.md) and [`hardware/kicad/README.md`](../hardware/kicad/README.md).
 
-Fabrication remains blocked until the editable KiCad schematic/PCB exist; ERC/DRC, schematic/PCB/cross analysis, datasheet extraction, power-limit resistor calculations, and mechanical clearance checks cannot be run against files that do not yet exist. Physical acceptance remains blocked until the bench and field checks above produce recorded evidence.
+Native KiCad 9 ERC and schematic analysis now exist. Fabrication remains blocked until the editable PCB exists and passes DRC, schematic/PCB cross analysis, layout/thermal/EMC review, received-module/mechanical checks, and fabrication-file review. Structured datasheet extraction and lifecycle/stock checks also remain open. Physical acceptance remains blocked until the bench and field checks above produce recorded evidence.
