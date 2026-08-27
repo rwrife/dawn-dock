@@ -15,8 +15,15 @@ __pycache__/
 
 # Generated analysis and ordering data
 hardware/kicad/analysis/*/
+hardware/kicad/routing/
+hardware/kicad/reports/*-preroute.json
+hardware/kicad/reports/dawn-dock.net
+hardware/kicad/reports/capability_mode.json
 datasheets/
 bom/orders/
+
+# Local isolated worktrees
+.worktrees/
 
 # OS/editor
 .DS_Store

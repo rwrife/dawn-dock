@@ -1,0 +1,79 @@
+{
+  "analyzer_type": "thermal",
+  "schema_version": "1.4.0",
+  "inputs": {
+    "source_files": [
+      "hardware/kicad/reports/schematic-analysis.json",
+      "hardware/kicad/reports/pcb.json"
+    ],
+    "source_hashes": {
+      "hardware/kicad/reports/schematic-analysis.json": "ec4c6fa36afd5e8ee66ac57ae82ca621bc9686cd632dc0a6d010f341d7b5bcc1",
+      "hardware/kicad/reports/pcb.json": "5435169649ff7345045ef269e391f191032ffc8e714eddc92e07e109b2de5882"
+    },
+    "run_id": "20260827T223911Z-266080",
+    "config_hash": null,
+    "upstream_artifacts": {
+      "schematic": {
+        "path": "hardware/kicad/reports/schematic-analysis.json",
+        "sha256": "ec4c6fa36afd5e8ee66ac57ae82ca621bc9686cd632dc0a6d010f341d7b5bcc1",
+        "schema_version": "1.4.0",
+        "run_id": "20260826T222755Z-eae3e5"
+      },
+      "pcb": {
+        "path": "hardware/kicad/reports/pcb.json",
+        "sha256": "5435169649ff7345045ef269e391f191032ffc8e714eddc92e07e109b2de5882",
+        "schema_version": "1.4.0",
+        "run_id": "20260826T222755Z-eae3e5"
+      }
+    }
+  },
+  "compat": {
+    "minimum_consumer_version": "1.4.0",
+    "deprecated_fields": [],
+    "experimental_fields": []
+  },
+  "summary": {
+    "total_findings": 0,
+    "components_assessed": 0,
+    "active": 0,
+    "suppressed": 0,
+    "by_severity": {
+      "error": 0,
+      "warning": 0,
+      "info": 0
+    },
+    "thermal_score": null,
+    "skipped_reason": "No components had quantifiable power dissipation data (missing MPNs or no datasheet extraction cache)",
+    "total_board_dissipation_w": 0,
+    "components_analyzed": 0,
+    "components_above_85c": 0,
+    "components_above_tjmax": 0,
+    "ambient_c": 35.0
+  },
+  "findings": [],
+  "assessments": [],
+  "elapsed_s": 0.0,
+  "trust_summary": {
+    "total_findings": 0,
+    "trust_level": "high",
+    "by_confidence": {
+      "deterministic": 0,
+      "heuristic": 0,
+      "datasheet_backed": 0
+    },
+    "by_evidence_source": {
+      "datasheet": 0,
+      "topology": 0,
+      "heuristic_rule": 0,
+      "symbol_footprint": 0,
+      "bom": 0,
+      "geometry": 0,
+      "api_lookup": 0
+    },
+    "provenance_coverage_pct": null
+  },
+  "capability_mode_ref": {
+    "source": "analysis/capability_mode.json",
+    "run_id": "20260827T223911Z-266080"
+  }
+}

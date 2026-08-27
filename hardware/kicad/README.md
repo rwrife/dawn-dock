@@ -1,17 +1,24 @@
 # Dawn Dock KiCad source
 
-This directory contains the editable Rev A carrier schematic. It is a static design artifact only: there is no PCB, fabricated assembly, or bench evidence yet.
+This directory contains the editable Rev A carrier schematic and routed two-layer PCB. These are static design artifacts only: there is no fabricated assembly or bench evidence yet.
 
 ## Files
 
-- `dawn-dock.kicad_pro` / `dawn-dock.kicad_sch` — KiCad 9 project and schematic.
+- `dawn-dock.kicad_pro` / `dawn-dock.kicad_sch` / `dawn-dock.kicad_pcb` — KiCad 9 project, schematic, and routed PCB.
 - `lib/dawn-dock.kicad_sym` — project symbols derived from cited manufacturer pin tables.
 - `lib/dawn-dock.pretty/` — project footprints for the DevKit/socket, module headers, PEC11R, and Keystone 3003.
 - `generate_schematic.py` — reproducible source generator.
+- `generate_pcb.py` — deterministic board outline, placement, antenna rule area, and fine-pitch fanout generator from a fresh KiCad netlist.
+- `specctra_io.py` — KiCad-native DSN export / SES import bridge with current-aware routing classes.
+- `finalize_pcb.py` — deterministic final +5 V join, GND stitching, and filled dual-layer GND planes.
+- `export_fabrication.py` — reproducible review-only Gerber/drill/placement/render export and checksum generator.
 - `validate_hardware.py` — BOM/connectivity/evidence assertions.
 - `reports/erc.rpt` — native KiCad 9 ERC output.
+- `reports/drc.json` — native KiCad 9 PCB DRC/parity output for the committed board.
 - `reports/schematic-analysis.json` / `.txt` — static analyzer output.
+- `reports/pcb.json`, `cross-analysis.json`, `emc.json`, `thermal.json`, and `gerber.json` — layout/cross-domain risk evidence and disclosed gaps.
 - `reports/hardware-validation.json` — project-specific machine-readable checks.
+- `fabrication/README.md` / `fabrication/rev-a0-prototype-review/` — checked review bundle under an explicit fabrication hold.
 
 ## Rebuild
 
@@ -24,7 +31,51 @@ python3 -m venv .venv
   --symbol-dir /usr/share/kicad/symbols
 ```
 
-The generator rewrites the project-local symbol and footprint files and the schematic. UUIDs may change between generations; review the electrical diff, not only textual UUID churn.
+The schematic generator rewrites the project-local symbol and footprint files and the schematic. UUIDs may change between generations; review the electrical diff, not only textual UUID churn.
+
+## Rebuild and route the PCB
+
+The accepted Rev A board was built with KiCad `9.0.2+dfsg-1`, FreeRouting `2.3.0`, and Eclipse Temurin `25.0.4+7`. FreeRouting is nondeterministic; the committed `.kicad_pcb` is the reviewed editable result. The deterministic generator/finalizer and these commands make rerouting auditable, but a new SES result must pass the same DRC before replacing the committed board.
+
+```bash
+docker build -t dawn-dock-kicad-verify \
+  -f hardware/kicad/Dockerfile.verify hardware/kicad
+
+route_dir="$(mktemp -d)"
+curl -fL \
+  https://github.com/freerouting/freerouting/releases/download/v2.3.0/freerouting-2.3.0.jar \
+  -o "$route_dir/freerouting-2.3.0.jar"
+printf '%s  %s\n' \
+  '3cf18d608437740bc497db6b8ef5888e2e60a08de0def20691d1bad0c0e0ee24' \
+  "$route_dir/freerouting-2.3.0.jar" | sha256sum --check
+
+docker run --rm -v "$PWD:/work" -v "$route_dir:/route" -w /work \
+  dawn-dock-kicad-verify sch export netlist \
+  --output /route/dawn-dock.net hardware/kicad/dawn-dock.kicad_sch
+docker run --rm -v "$PWD:/work" -v "$route_dir:/route" -w /work \
+  --entrypoint python3 dawn-dock-kicad-verify \
+  hardware/kicad/generate_pcb.py --netlist /route/dawn-dock.net \
+  --output hardware/kicad/dawn-dock.kicad_pcb
+docker run --rm -v "$PWD:/work" -v "$route_dir:/route" -w /work \
+  --entrypoint python3 dawn-dock-kicad-verify \
+  hardware/kicad/specctra_io.py export \
+  --board hardware/kicad/dawn-dock.kicad_pcb --dsn /route/dawn-dock.dsn
+docker run --rm -v "$route_dir:/route" eclipse-temurin:25-jre \
+  java -jar /route/freerouting-2.3.0.jar \
+  -de /route/dawn-dock.dsn -do /route/dawn-dock.ses \
+  -mp 30 -mt 4 -da --gui.enabled=false \
+  --logging.file.enabled=false --logging.console.level=INFO \
+  --user_data_path=/tmp/freerouting
+docker run --rm -v "$PWD:/work" -v "$route_dir:/route" -w /work \
+  --entrypoint python3 dawn-dock-kicad-verify \
+  hardware/kicad/specctra_io.py import \
+  --board hardware/kicad/dawn-dock.kicad_pcb --ses /route/dawn-dock.ses \
+  --output /route/dawn-dock-routed.kicad_pcb
+docker run --rm -v "$PWD:/work" -v "$route_dir:/route" -w /work \
+  --entrypoint python3 dawn-dock-kicad-verify \
+  hardware/kicad/finalize_pcb.py --board /route/dawn-dock-routed.kicad_pcb \
+  --output hardware/kicad/dawn-dock.kicad_pcb
+```
 
 ## Verify
 
@@ -97,7 +148,8 @@ The optional carrier I²C pull-ups are DNP because the display and sensor module
 
 ## Open evidence gates
 
-- PCB layout, return paths, thermal pad implementation, antenna keepout, and exact enclosure/mechanical placement belong to issue #4.
+- The routed Rev A0 board and review-only manufacturing outputs exist, but six error-level heuristic plane-coverage findings and two error-level clock-transition return-path findings remain open. The finalizer added 59 DRC-clean return vias; see `reports/emc.json` and `fabrication/README.md`.
+- Exact received-unit dimensions, connector orientation, enclosure/mechanical placement, and antenna metal clearance still block fabrication.
 - Module revision, connector orientation, total module capacitance, current, luminance, audio, RTC retention/drift, ESD/EMC, and thermals require identified physical hardware.
 - Price and availability are dated 2026-08-23 planning observations, not purchase-time guarantees.
 - The local analyzer has no structured datasheet extraction cache, so its trust rollup remains low even though critical pin tables were manually checked against downloaded manufacturer PDFs. Do not convert this static review into a bench-tested or fabrication-ready claim.

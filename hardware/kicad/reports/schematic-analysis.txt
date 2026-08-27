@@ -114,9 +114,14 @@
       Component: U1
       Stages: schematic
 
+--- verification ---
+  [26] WARNING DS-002: No datasheets directory found (35/35 parts have MPNs). Sync datasheets before making pin-level claims.
+      Fix:    Run datasheet sync via the digikey / mouser / lcsc / element14 skill (which one depends on the user's distributor access and API credentials). A ./datasheets/ directory with PDFs and a manifest.json enables pin-level verification in the next analyzer run.
+      Stages: schematic
+
 --- wireless ---
-  [26] INFO WL-001: wifi/ble module A1 (ESP32-S3-DEVKITC-1-N8R8)
+  [27] INFO WL-001: wifi/ble module A1 (ESP32-S3-DEVKITC-1-N8R8)
       Detail: Detected wifi_ble wireless module A1 (ESP32-S3-DEVKITC-1-N8R8).
       Stages: schematic, bring_up
 
-Total: 26 (3 errors, 0 warnings, 23 info)
+Total: 27 (3 errors, 1 warning, 23 info)
