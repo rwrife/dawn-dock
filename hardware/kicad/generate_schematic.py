@@ -92,7 +92,7 @@ def write_custom_library(here: Path) -> None:
         x1, y1, x2, y2 = outline
         rows = [f'(footprint "{name}" (version 20221018) (generator pcbnew)', '  (layer "F.Cu")', f'  (descr "{q(description)}")', '  (attr through_hole)', '  (fp_text reference "REF**" (at 0 -4) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))', '  (fp_text value "'+q(name)+'" (at 0 4) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))']
         for a,b,c,d in [(x1,y1,x2,y1),(x2,y1,x2,y2),(x2,y2,x1,y2),(x1,y2,x1,y1)]:
-            rows.append(f'  (fp_line (start {a} {b}) (end {c} {d}) (stroke (width 0.25) (type default)) (layer "F.SilkS"))')
+            rows.append(f'  (fp_line (start {a} {b}) (end {c} {d}) (stroke (width 0.25) (type default)) (layer "F.Fab"))')
         for num, x, y, kind in pads:
             shape = "rect" if num in {"1", "J1-1"} else "circle"
             if kind == "smd": rows.append(f'  (pad "{num}" smd {shape} (at {x} {y}) (size 4 4) (layers "F.Cu" "F.Paste" "F.Mask"))')

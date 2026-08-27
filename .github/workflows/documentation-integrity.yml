@@ -54,6 +54,58 @@ jobs:
             --bom "$RUNNER_TEMP/dawn-kicad/bom.csv" \
             --erc "$RUNNER_TEMP/dawn-kicad/erc.rpt" \
             --output "$RUNNER_TEMP/dawn-kicad/hardware-validation.json"
+      - name: Derive and validate PCB evidence
+        run: |
+          docker run --rm \
+            -e KICAD9_SYMBOL_DIR=/usr/share/kicad/symbols \
+            -e KICAD9_FOOTPRINT_DIR=/usr/share/kicad/footprints \
+            -v "$PWD:/work" -v "$RUNNER_TEMP/dawn-kicad:/out" \
+            -w /work/hardware/kicad dawn-kicad-verify \
+            pcb drc --format json --output /out/drc.json \
+            --exit-code-violations dawn-dock.kicad_pcb
+          docker run --rm \
+            -v "$PWD:/work" -v "$RUNNER_TEMP/dawn-kicad:/out" \
+            -w /work --entrypoint python3 dawn-kicad-verify \
+            hardware/kicad/export_fabrication.py \
+            --board hardware/kicad/dawn-dock.kicad_pcb --output /out/fab
+          cmp hardware/kicad/fabrication/rev-a0-prototype-review/dawn-dock-rev-a0-gerbers-review-only.zip \
+            "$RUNNER_TEMP/dawn-kicad/fab/dawn-dock-rev-a0-gerbers-review-only.zip"
+          cmp hardware/kicad/fabrication/rev-a0-prototype-review/dawn-dock-rev-a0-position.csv \
+            "$RUNNER_TEMP/dawn-kicad/fab/dawn-dock-rev-a0-position.csv"
+          (cd hardware/kicad/fabrication/rev-a0-prototype-review && \
+            sha256sum --check SHA256SUMS && \
+            python3 -m zipfile --test dawn-dock-rev-a0-gerbers-review-only.zip)
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import zipfile
+          from pathlib import Path
+
+          artifact = Path("hardware/kicad/fabrication/rev-a0-prototype-review")
+          reports = Path("hardware/kicad/reports")
+
+          def digest(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+          for report_name, source in (
+              ("schematic-analysis.json", "hardware/kicad/dawn-dock.kicad_sch"),
+              ("pcb.json", "hardware/kicad/dawn-dock.kicad_pcb"),
+          ):
+              primary = json.loads((reports / report_name).read_text())
+              assert digest(source) in primary["inputs"]["source_hashes"].values()
+
+          for report_name in ("cross-analysis.json", "emc.json", "thermal.json"):
+              downstream = json.loads((reports / report_name).read_text())
+              for source, expected in downstream["inputs"]["source_hashes"].items():
+                  assert digest(source) == expected, (report_name, source, expected, digest(source))
+
+          report = json.loads((reports / "gerber.json").read_text())
+          with zipfile.ZipFile(artifact / "dawn-dock-rev-a0-gerbers-review-only.zip") as archive:
+              for source, expected in report["inputs"]["source_hashes"].items():
+                  member = source.split("/rev-a0-prototype-review/", 1)[1]
+                  actual = hashlib.sha256(archive.read(member)).hexdigest()
+                  assert actual == expected, (member, expected, actual)
+          PY
       - name: Reject whitespace errors
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}

@@ -1,0 +1,162 @@
+{
+  "analyzer_type": "cross_analysis",
+  "schema_version": "1.4.0",
+  "inputs": {
+    "source_files": [
+      "hardware/kicad/reports/schematic-analysis.json",
+      "hardware/kicad/reports/pcb.json"
+    ],
+    "source_hashes": {
+      "hardware/kicad/reports/schematic-analysis.json": "ec4c6fa36afd5e8ee66ac57ae82ca621bc9686cd632dc0a6d010f341d7b5bcc1",
+      "hardware/kicad/reports/pcb.json": "5435169649ff7345045ef269e391f191032ffc8e714eddc92e07e109b2de5882"
+    },
+    "run_id": "20260826T222755Z-eae3e5",
+    "config_hash": null,
+    "upstream_artifacts": {
+      "schematic": {
+        "path": "hardware/kicad/reports/schematic-analysis.json",
+        "sha256": "ec4c6fa36afd5e8ee66ac57ae82ca621bc9686cd632dc0a6d010f341d7b5bcc1",
+        "schema_version": "1.4.0",
+        "run_id": "20260826T222755Z-eae3e5"
+      },
+      "pcb": {
+        "path": "hardware/kicad/reports/pcb.json",
+        "sha256": "5435169649ff7345045ef269e391f191032ffc8e714eddc92e07e109b2de5882",
+        "schema_version": "1.4.0",
+        "run_id": "20260826T222755Z-eae3e5"
+      }
+    }
+  },
+  "compat": {
+    "minimum_consumer_version": "1.4.0",
+    "deprecated_fields": [],
+    "experimental_fields": []
+  },
+  "elapsed_s": 0.006,
+  "summary": {
+    "total_findings": 1,
+    "by_severity": {
+      "error": 0,
+      "warning": 1,
+      "info": 0
+    }
+  },
+  "findings": [
+    {
+      "detector": "check_cross_validation",
+      "rule_id": "XV-001",
+      "category": "design_sync",
+      "summary": "1 component(s) in schematic but not PCB",
+      "description": "Missing from PCB: SPK1.",
+      "components": [
+        "SPK1"
+      ],
+      "nets": [],
+      "pins": [],
+      "severity": "warning",
+      "confidence": "deterministic",
+      "evidence_source": "topology",
+      "recommendation": "Update PCB from schematic (Tools > Update PCB from Schematic).",
+      "report_context": {
+        "section": "Design Sync",
+        "impact": "Missing components on manufactured board",
+        "standard_ref": ""
+      },
+      "finding_id": "cross_analysis:XV-001:spk1",
+      "stages": [
+        "pre_fab"
+      ]
+    }
+  ],
+  "assessments": [],
+  "trust_summary": {
+    "total_findings": 1,
+    "trust_level": "high",
+    "by_confidence": {
+      "deterministic": 1,
+      "heuristic": 0,
+      "datasheet_backed": 0
+    },
+    "by_evidence_source": {
+      "datasheet": 0,
+      "topology": 1,
+      "heuristic_rule": 0,
+      "symbol_footprint": 0,
+      "bom": 0,
+      "geometry": 0,
+      "api_lookup": 0
+    },
+    "provenance_coverage_pct": 0.0
+  },
+  "audience_summary": {
+    "designer": {
+      "total_findings": 1,
+      "by_severity": {
+        "error": 0,
+        "warning": 1,
+        "info": 0
+      },
+      "by_category": {
+        "design_sync": 1
+      },
+      "top_issues": [
+        {
+          "detector": "check_cross_validation",
+          "rule_id": "XV-001",
+          "category": "design_sync",
+          "summary": "1 component(s) in schematic but not PCB",
+          "description": "Missing from PCB: SPK1.",
+          "components": [
+            "SPK1"
+          ],
+          "nets": [],
+          "pins": [],
+          "severity": "warning",
+          "confidence": "deterministic",
+          "evidence_source": "topology",
+          "recommendation": "Update PCB from schematic (Tools > Update PCB from Schematic).",
+          "report_context": {
+            "section": "Design Sync",
+            "impact": "Missing components on manufactured board",
+            "standard_ref": ""
+          },
+          "finding_id": "cross_analysis:XV-001:spk1",
+          "stages": [
+            "pre_fab"
+          ]
+        }
+      ]
+    },
+    "reviewer": {
+      "total_findings": 1,
+      "by_category": {
+        "design_sync": 1
+      },
+      "top_issues": [
+        {
+          "rule_id": "XV-001",
+          "severity": "warning",
+          "summary": "1 component(s) in schematic but not PCB",
+          "recommendation": "Update PCB from schematic (Tools > Update PCB from Schematic).",
+          "category": "design_sync"
+        }
+      ]
+    },
+    "manager": {
+      "risk_level": "low",
+      "blocker_count": 0,
+      "warning_count": 1,
+      "stage_readiness": {
+        "schematic": "pass",
+        "layout": "pass",
+        "pre_fab": "needs_review",
+        "bring_up": "pass"
+      },
+      "one_liner": "1 warning across 1 category."
+    }
+  },
+  "capability_mode_ref": {
+    "source": "analysis/capability_mode.json",
+    "run_id": "20260826T222755Z-eae3e5"
+  }
+}

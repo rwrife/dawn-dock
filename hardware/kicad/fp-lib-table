@@ -7,6 +7,7 @@
   (lib (name "Connector_PinSocket_2.54mm")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Connector_PinSocket_2.54mm.pretty")(options "")(descr ""))
   (lib (name "Connector_USB")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Connector_USB.pretty")(options "")(descr ""))
   (lib (name "Diode_SMD")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Diode_SMD.pretty")(options "")(descr ""))
+  (lib (name "Fiducial")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Fiducial.pretty")(options "")(descr ""))
   (lib (name "MountingHole")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/MountingHole.pretty")(options "")(descr ""))
   (lib (name "Package_SO")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Package_SO.pretty")(options "")(descr ""))
   (lib (name "Package_SON")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/Package_SON.pretty")(options "")(descr ""))

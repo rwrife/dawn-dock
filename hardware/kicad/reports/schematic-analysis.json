@@ -2,18 +2,18 @@
   "analyzer_type": "schematic",
   "schema_version": "1.4.0",
   "summary": {
-    "total_findings": 26,
+    "total_findings": 27,
     "by_severity": {
       "error": 3,
-      "warning": 0,
+      "warning": 1,
       "info": 23
     }
   },
   "trust_summary": {
-    "total_findings": 26,
+    "total_findings": 27,
     "trust_level": "low",
     "by_confidence": {
-      "deterministic": 11,
+      "deterministic": 12,
       "heuristic": 15,
       "datasheet_backed": 0
     },
@@ -22,11 +22,11 @@
       "topology": 26,
       "heuristic_rule": 0,
       "symbol_footprint": 0,
-      "bom": 0,
+      "bom": 1,
       "geometry": 0,
       "api_lookup": 0
     },
-    "provenance_coverage_pct": 76.9,
+    "provenance_coverage_pct": 74.1,
     "bom_coverage": {
       "total_components": 24,
       "with_mpn": 24,
@@ -638,6 +638,53 @@
         "schematic"
       ],
       "finding_id": "schematic:DO-DET-u1"
+    },
+    {
+      "detector": "audit_datasheet_coverage",
+      "rule_id": "DS-002",
+      "severity": "warning",
+      "confidence": "deterministic",
+      "evidence_source": "bom",
+      "category": "verification",
+      "summary": "No datasheets directory found (35/35 parts have MPNs). Sync datasheets before making pin-level claims.",
+      "components": [
+        "A1",
+        "A2",
+        "A3",
+        "BT1",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8",
+        "D1",
+        "DS1",
+        "ENC1",
+        "J1",
+        "R1",
+        "R10",
+        "R11",
+        "R12"
+      ],
+      "nets": [],
+      "pins": [],
+      "datasheets_dir": null,
+      "datasheet_file_count": 0,
+      "bom_size": 35,
+      "mpn_coverage_percent": 100.0,
+      "recommendation": "Run datasheet sync via the digikey / mouser / lcsc / element14 skill (which one depends on the user's distributor access and API credentials). A ./datasheets/ directory with PDFs and a manifest.json enables pin-level verification in the next analyzer run.",
+      "report_context": {
+        "section": "Datasheet Coverage",
+        "impact": "Review claims must stay at consistency level until datasheets land.",
+        "standard_ref": ""
+      },
+      "stages": [
+        "schematic"
+      ],
+      "finding_id": "schematic:DS-002:a1"
     },
     {
       "connector_ref": "J1",
@@ -25857,12 +25904,12 @@
   },
   "inputs": {
     "source_files": [
-      "/home/rwrife/repos/dawn-dock-issue-3/hardware/kicad/dawn-dock.kicad_sch"
+      "/home/rwrife/repos/dawn-dock/.worktrees/issue-4-carrier-pcb/hardware/kicad/dawn-dock.kicad_sch"
     ],
     "source_hashes": {
-      "/home/rwrife/repos/dawn-dock-issue-3/hardware/kicad/dawn-dock.kicad_sch": "5ffeb77de8606758f3d8f528db077fe2ccd6de8a86e9a746f1364d5de0dfcabe"
+      "/home/rwrife/repos/dawn-dock/.worktrees/issue-4-carrier-pcb/hardware/kicad/dawn-dock.kicad_sch": "5ffeb77de8606758f3d8f528db077fe2ccd6de8a86e9a746f1364d5de0dfcabe"
     },
-    "run_id": "20260825T224453Z-9a11b3",
+    "run_id": "20260826T222755Z-eae3e5",
     "config_hash": null,
     "upstream_artifacts": {}
   },
@@ -25898,10 +25945,10 @@
   },
   "audience_summary": {
     "designer": {
-      "total_findings": 26,
+      "total_findings": 27,
       "by_severity": {
         "error": 3,
-        "warning": 0,
+        "warning": 1,
         "info": 23
       },
       "by_category": {
@@ -25910,6 +25957,7 @@
         "decoupling": 4,
         "i2c_bus": 2,
         "decoupling_coverage": 3,
+        "verification": 1,
         "protection": 2,
         "signal_integrity": 4,
         "power_management": 1,
@@ -26117,12 +26165,60 @@
           "stages": [
             "schematic"
           ]
+        },
+        {
+          "detector": "audit_datasheet_coverage",
+          "rule_id": "DS-002",
+          "severity": "warning",
+          "confidence": "deterministic",
+          "evidence_source": "bom",
+          "category": "verification",
+          "summary": "No datasheets directory found (35/35 parts have MPNs). Sync datasheets before making pin-level claims.",
+          "components": [
+            "A1",
+            "A2",
+            "A3",
+            "BT1",
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8",
+            "D1",
+            "DS1",
+            "ENC1",
+            "J1",
+            "R1",
+            "R10",
+            "R11",
+            "R12"
+          ],
+          "nets": [],
+          "pins": [],
+          "datasheets_dir": null,
+          "datasheet_file_count": 0,
+          "bom_size": 35,
+          "mpn_coverage_percent": 100.0,
+          "recommendation": "Run datasheet sync via the digikey / mouser / lcsc / element14 skill (which one depends on the user's distributor access and API credentials). A ./datasheets/ directory with PDFs and a manifest.json enables pin-level verification in the next analyzer run.",
+          "report_context": {
+            "section": "Datasheet Coverage",
+            "impact": "Review claims must stay at consistency level until datasheets land.",
+            "standard_ref": ""
+          },
+          "stages": [
+            "schematic"
+          ],
+          "finding_id": "schematic:DS-002:a1"
         }
       ]
     },
     "reviewer": {
-      "total_findings": 3,
+      "total_findings": 4,
       "by_category": {
+        "verification": 1,
         "signal_integrity": 3
       },
       "top_issues": [
@@ -26146,24 +26242,31 @@
           "summary": "Net RTC_INT_N: 5.0V / 3.3V domain crossing without level shifter",
           "recommendation": "Add a level shifter between the 5.0V and 3.3V domains on net RTC_INT_N, or verify that the connected ICs have tolerant inputs.",
           "category": "signal_integrity"
+        },
+        {
+          "rule_id": "DS-002",
+          "severity": "warning",
+          "summary": "No datasheets directory found (35/35 parts have MPNs). Sync datasheets before making pin-level claims.",
+          "recommendation": "Run datasheet sync via the digikey / mouser / lcsc / element14 skill (which one depends on the user's distributor access and API credentials). A ./datasheets/ directory with PDFs and a manifest.json enables pin-level verification in the next analyzer run.",
+          "category": "verification"
         }
       ]
     },
     "manager": {
       "risk_level": "moderate",
       "blocker_count": 3,
-      "warning_count": 0,
+      "warning_count": 1,
       "stage_readiness": {
         "schematic": "needs_work",
         "layout": "pass",
         "pre_fab": "pass",
         "bring_up": "pass"
       },
-      "one_liner": "3 errors across 1 category. Schematic stage has blockers."
+      "one_liner": "3 errors, 1 warning across 2 categories. Schematic stage has blockers."
     }
   },
   "capability_mode_ref": {
     "source": "analysis/capability_mode.json",
-    "run_id": "20260825T224453Z-9a11b3"
+    "run_id": "20260826T222755Z-eae3e5"
   }
 }

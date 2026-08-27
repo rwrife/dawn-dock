@@ -72,10 +72,10 @@ The editable design tree is:
 ```text
 hardware/kicad/dawn-dock.kicad_pro
 hardware/kicad/dawn-dock.kicad_sch
-hardware/kicad/dawn-dock.kicad_pcb  # planned in issue #4; not present yet
+hardware/kicad/dawn-dock.kicad_pcb  # routed Rev A0 review source
 ```
 
-The project and schematic exist and remain the design source of truth; the PCB does not yet exist. The schematic passes documented native ERC. The future PCB must pass DRC and cross-analysis before fabrication. PDF exports supplement but never replace editable sources.
+The project, schematic, and routed two-layer PCB exist and remain the design source of truth. Native ERC and DRC are clean and the review-only Gerber bundle is complete/aligned, but issue #4 remains on fabrication hold for received-unit geometry/orientation confirmation and unresolved EMC return-path/plane-coverage findings. PDF, render, and Gerber exports supplement but never replace editable sources.
 
 Final electrical BOM data lives in KiCad schematic symbol properties (`Manufacturer`, `MPN`, supplier fields, notes) and is exported to `bom/bom.csv`. `bom/preliminary-bom.csv` is planning input/history, not the final electrical BOM.
 
@@ -110,17 +110,18 @@ The v0.1 documentation baseline freezes downstream design constraints while keep
 - [Manufacturer/source manifest](docs/source-manifest.csv)
 - [Editable KiCad schematic, build, and verification](hardware/kicad/README.md)
 - [Rev A schematic static review](docs/schematic-review.md)
+- [Rev A0 PCB static layout review and fabrication hold](docs/pcb-layout-review.md)
 
 The diagrams are editable Mermaid source. Results must be labeled as static analysis, simulation, software test, bench test, or field test; an absent physical test remains an open evidence gap.
 
 ## Current status and milestones
 
-**Status: requirements, Rev A component selection, and editable carrier schematic complete; PCB/layout and physical evidence not started.** The KiCad 9 schematic has a clean native ERC report, static analyzer output, named test access, and a source-property BOM. No PCB, firmware, companion app, DRC/fabrication output, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
+**Status: requirements, Rev A component selection, schematic, and a routed Rev A0 PCB review candidate exist; fabrication remains blocked.** KiCad 9 ERC/DRC are clean, all nets are routed, and review-only Gerber/drill/render outputs are committed with checksums. Received module/enclosure geometry, two crowded clock return paths, broader plane coverage, assembly rotations, and physical behavior remain open gates. No firmware, companion app, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
 
 1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
 2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
 3. **Editable carrier schematic complete** — native ERC 0 errors/0 warnings, analyzer evidence, critical pin mapping, and KiCad-derived BOM are committed.
-4. Create and verify the carrier PCB/layout, then build the firmware clock/alarm core.
+4. Resolve Rev A0 PCB fabrication holds, confirm received mechanics, then build the firmware clock/alarm core.
 5. Build the local-first companion and protocol.
 6. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
