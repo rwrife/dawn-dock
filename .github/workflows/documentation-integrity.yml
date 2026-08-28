@@ -110,3 +110,29 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: git diff --check "$BASE_SHA" "$GITHUB_SHA"
+
+  firmware-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure native alarm-core tests
+        run: cmake -S firmware/host -B build/firmware-host -G "Unix Makefiles"
+      - name: Build native alarm-core tests
+        run: cmake --build build/firmware-host --parallel
+      - name: Run native alarm-core tests
+        run: ctest --test-dir build/firmware-host --output-on-failure
+
+  firmware-esp-idf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build immutable ESP-IDF verifier
+        run: docker build -t dawn-dock-idf-verify -f firmware/Dockerfile.verify firmware
+      - name: Cross-build ESP32-S3 firmware in disposable source copy
+        run: |
+          mkdir -p "$RUNNER_TEMP/dawn-firmware"
+          cp -a firmware/. "$RUNNER_TEMP/dawn-firmware/"
+          docker run --rm \
+            -v "$RUNNER_TEMP/dawn-firmware:/project" -w /project \
+            dawn-dock-idf-verify idf.py set-target esp32s3 build
+          test -s "$RUNNER_TEMP/dawn-firmware/build/dawn_dock_firmware.bin"

@@ -116,12 +116,12 @@ The diagrams are editable Mermaid source. Results must be labeled as static anal
 
 ## Current status and milestones
 
-**Status: requirements, Rev A component selection, schematic, and a routed Rev A0 PCB review candidate exist; fabrication remains blocked.** KiCad 9 ERC/DRC are clean, all nets are routed, and review-only Gerber/drill/render outputs are committed with checksums. Received module/enclosure geometry, two crowded clock return paths, broader plane coverage, assembly rotations, and physical behavior remain open gates. No firmware, companion app, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
+**Status: requirements, Rev A component selection, schematic, a routed Rev A0 PCB review candidate, and the first host-tested alarm firmware core exist; fabrication remains blocked.** KiCad 9 ERC/DRC are clean, all nets are routed, and review-only Gerber/drill/render outputs are committed with checksums. The firmware has a pinned ESP-IDF 5.5.5 ESP32-S3 build and host-tested occurrence lifecycle, but recurrence/timezone, storage, hardware adapters, protocol, target execution, and bench evidence remain open. Received module/enclosure geometry, two crowded clock return paths, broader plane coverage, assembly rotations, and physical behavior remain open gates. No companion app, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
 
 1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
 2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
 3. **Editable carrier schematic complete** — native ERC 0 errors/0 warnings, analyzer evidence, critical pin mapping, and KiCad-derived BOM are committed.
-4. Resolve Rev A0 PCB fabrication holds, confirm received mechanics, then build the firmware clock/alarm core.
+4. Continue the firmware clock/alarm core from the tested occurrence lifecycle into recurrence/timezone, atomic storage, and hardware abstractions while Rev A0 fabrication holds remain open.
 5. Build the local-first companion and protocol.
 6. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
@@ -146,4 +146,4 @@ Planned implementation tools:
 - Flutter stable for Android, iOS, Windows, and macOS companion targets.
 - Python 3 for protocol fixtures and hardware-independent integration tests.
 
-See [`hardware/kicad/README.md`](hardware/kicad/README.md) for the pinned schematic generator, KiCad 9 ERC/BOM/PDF commands, evidence limits, and unresolved physical gates. Firmware and companion build commands remain future work.
+See [`hardware/kicad/README.md`](hardware/kicad/README.md) for the pinned hardware workflow and [`firmware/README.md`](firmware/README.md) for host tests, the immutable ESP-IDF container build, flash/recovery commands, and explicit firmware evidence gaps. Companion build commands remain future work.
