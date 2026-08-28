@@ -1,7 +1,7 @@
 # Deterministic alarm semantics
 
 **Baseline:** v0.1
-**Evidence status:** normative behavior specification; implementation and test evidence do not exist yet
+**Evidence status:** normative behavior specification with partial host software-test coverage in `firmware/host`; recurrence/timezone, storage, target, and bench evidence remain open
 
 ## Principles
 

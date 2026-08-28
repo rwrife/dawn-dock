@@ -7,6 +7,10 @@ build/
 __pycache__/
 *.py[cod]
 
+# Firmware build outputs
+firmware/sdkconfig
+firmware/sdkconfig.old
+
 # KiCad working/backup files
 *.kicad_prl
 *.kicad_sch-bak
