@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core host tests and ESP32-S3 build; no target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core and dual-slot storage host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
 
 ## Evidence classes
 
@@ -23,7 +23,7 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ELEC-02 | Device peak ≤1.5 A at 5 V allocation | Static source-backed current sum + PCB review; bench idle/peak/inrush measurement | 1.53 kΩ ILM and 100 nF dVdt network calculate to about 1.347 A nominal/1.463 A conservative and 0.42 V/ms; actual module current/inrush/thermals remain unmeasured |
 | ELEC-03 | Recover to valid state after brownout; reset cause visible | Software fixtures; bench controlled voltage sag/reset | Specified only |
 | ELEC-04 | Valid RTC time after 24 h main-power removal; drift reported | Datasheet/static review then bench retention/drift test | DS3231MZ+/CR2032 VBAT net is captured with no rail/charge connection; bench retention/drift open |
-| ELEC-05 | Schedule intact and no duplicate occurrence after 100 controlled cycles | Software corruption/recovery fixtures + automated bench cycling | Host core suppresses active/terminal duplicate occurrence IDs; storage integrity, 100-cycle software fixture, and automated bench cycling remain open |
+| ELEC-05 | Schedule intact and no duplicate occurrence after 100 controlled cycles | Software corruption/recovery fixtures + automated bench cycling | Host cores suppress active/terminal duplicate occurrence IDs and software-test a bounded dual-slot record with CRC32 over selection metadata and payload, transaction-serialized compare-and-swap revisions, read/read-back failures, corruption rollback, v1→v2 migration, split-brain rejection, and no-write acknowledgement-loss retry; ESP-IDF NVS binding and automated physical cycling remain open |
 | ELEC-06 | Dedicated controls; single action; ≤100 ms valid-press response | Static GPIO review; host debounce fixture; bench latency capture | Five separate 5 V/4.7 kΩ wetted-contact paths and LVC14 outputs are captured on conflict-free GPIOs; behavior untested |
 | ELEC-07 | Blackout; lowest lit target ≤1 cd/m² | Static backlight-path review; dark-room bench luminance measurement | Separate `LCD_BL` PWM path selected; luminance unmeasured |
 | ELEC-08 | 60–75 dBA normal range and ≤80 dBA maximum at 1 m | Static driver review; bench A-weighted slow measurement in enclosure | MAX98357A and 8-ohm/2-watt speaker selected; acoustic/thermal evidence open |
@@ -54,7 +54,7 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-02 | Spring gap shifts once; fall fold rings first occurrence once | Host timezone fixtures for at least two zones | Specification only |
 | ALARM-03 | Forward correction grace boundaries at 9:59/10:00/10:01 | Host fixtures and target correction test | Host boundary fixture passes; target correction test remains open |
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
-| ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host in-memory recovery fixture covers once-per-boot resume, snooze cancellation, and prolonged-power-off missed classification; serialized persistence and controlled target resets remain open |
+| ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; ESP-IDF NVS integration and controlled target resets remain open |
 
 
 ## Release-report rule

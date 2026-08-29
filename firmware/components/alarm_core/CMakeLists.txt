@@ -1,5 +1,7 @@
 idf_component_register(
-  SRCS "alarm_engine.cpp"
+  SRCS
+    "alarm_engine.cpp"
+    "schedule_store.cpp"
   INCLUDE_DIRS "include"
 )
 
