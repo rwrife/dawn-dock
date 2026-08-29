@@ -115,11 +115,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure native alarm-core tests
+      - name: Configure native firmware tests
         run: cmake -S firmware/host -B build/firmware-host -G "Unix Makefiles"
-      - name: Build native alarm-core tests
+      - name: Build native firmware tests
         run: cmake --build build/firmware-host --parallel
-      - name: Run native alarm-core tests
+      - name: Run native firmware tests
         run: ctest --test-dir build/firmware-host --output-on-failure
 
   firmware-esp-idf:

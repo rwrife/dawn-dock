@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus a host-tested offline alarm occurrence core. No firmware has been flashed to physical hardware, and no RTC, display, controls, audio, storage, transport, or timezone adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence and atomic schedule-storage cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or timezone adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -19,7 +19,18 @@ Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/
   distinct alarm IDs;
 - reboot recovery once per boot inside the original wall lifetime, snooze cancellation, and prolonged-power-off `Missed` classification.
 
-The caller must persist `PersistentAlarmState` atomically before acting on any result with `persist_before_effects=true`. The 32 recent terminal records are diagnostic history and may be evicted, while a separate index retains the greatest terminal scheduled UTC instant for each of at most 32 distinct alarm IDs. For a tracked alarm ID, any occurrence at or below that high-watermark remains duplicate-suppressed after diagnostic compaction; a later scheduled instant can be admitted. When all 32 alarm-ID slots are occupied, an occurrence for a new alarm ID fails closed with `conflict` rather than being admitted without durable duplicate protection. This bound assumes scheduled UTC instants for a given alarm ID advance over time; intentionally reusing an alarm ID for an earlier instant remains suppressed. Storage serialization, last-known-good rollback, and recurrence/timezone resolution remain outside this component.
+The caller must persist `PersistentAlarmState` atomically before acting on any result with `persist_before_effects=true`. The 32 recent terminal records are diagnostic history and may be evicted, while a separate index retains the greatest terminal scheduled UTC instant for each of at most 32 distinct alarm IDs. For a tracked alarm ID, any occurrence at or below that high-watermark remains duplicate-suppressed after diagnostic compaction; a later scheduled instant can be admitted. When all 32 alarm-ID slots are occupied, an occurrence for a new alarm ID fails closed with `conflict` rather than being admitted without durable duplicate protection. This bound assumes scheduled UTC instants for a given alarm ID advance over time; intentionally reusing an alarm ID for an earlier instant remains suppressed. Recurrence/timezone resolution remains outside this component.
+
+`AtomicScheduleStore` persists the complete schedule and occurrence journal through a two-slot `SlotStorage` abstraction:
+
+- each schema-v2 record carries magic, schema version, monotonically increasing storage generation, payload length, and CRC32 over all selection metadata plus payload;
+- snapshots are bounded to 64 KiB, 32 alarms, bounded identifiers, 32 recent terminal outcomes, and 32 terminal high-watermarks;
+- `save` holds a backend-wide exclusive transaction across both-slot inspection, compare-and-swap schedule revision checks, opposite-slot replacement, re-read, and semantic equality validation;
+- an exact retry after a lost acknowledgement accepts the original expected revision and returns no-write `unchanged`, reducing flash wear without masking a different stale update;
+- a corrupt newest slot visibly falls back to the last-known-good generation; equal-generation divergent records, wholly corrupt stores, and intact newer schemas fail closed;
+- schema v1 loads with an explicit `legacy-v1-unpinned` timezone marker and can be atomically migrated to v2 without overwriting its rollback slot.
+
+CRC32 detects accidental corruption; it is not authentication. The eventual ESP-IDF backend must provide one exclusive transaction across all store instances, tri-state reads, and atomic replacement per slot (for example, independent NVS blobs); that binding remains unimplemented. These host fault-injection tests do not prove flash endurance, brownout behavior, or physical power-cycle retention.
 
 ## Pinned toolchain
 
@@ -92,7 +103,7 @@ Recovery baseline:
 
 - recurrence across calendar boundaries and IANA timezone/DST gap/fold resolution;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
-- versioned atomic storage, migration, corruption rollback, wear bounds, and 100-cycle persistence fixtures;
+- ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
 - authenticated revisioned protocol, provisioning, diagnostics, factory reset, and update rollback;
 - formatter/static-analysis policy beyond compiler warnings;
