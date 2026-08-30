@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core and dual-slot storage host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, dual-slot storage, and supplied-rule weekly recurrence host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
 
 ## Evidence classes
 
@@ -50,8 +50,8 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | COST-02 | Price/stock observations are dated and non-guaranteed; overage requires a decision record | BOM/documentation review | Dated snapshot and overage decision recorded; live recheck still required at order |
 | COST-03 | KiCad properties are the final electrical BOM source; non-schematic items remain separate | Static KiCad/BOM audit | `bom/bom.csv` is exported from KiCad properties; enclosure/supply/cable/fasteners remain in `bom/non-schematic-items.csv` |
 | COST-04 | Validate MPN/pin/package/thermal/lifecycle/source before purchase | Static BOM/datasheet audit | Electrical BOM has exact active/passive MPNs, supplier source, dated estimates, notes, and DNP pull-ups; received revisions, lifecycle/stock, layout thermal implementation, and purchase-time recheck remain open |
-| ALARM-01 | State transitions match `docs/alarm-semantics.md` | Host state-machine fixture; target interaction tests | Host software tests cover due/disabled admission, duplicate suppression, snooze/re-ring, dismiss, timeout, missed, and reboot-recovery transitions; recurrence, disable-after-terminal, invalid-time reconciliation, storage, target, and bench paths remain open |
-| ALARM-02 | Spring gap shifts once; fall fold rings first occurrence once | Host timezone fixtures for at least two zones | Specification only |
+| ALARM-01 | State transitions match `docs/alarm-semantics.md` | Host state-machine fixture; target interaction tests | Host software tests cover due/disabled admission, duplicate suppression, snooze/re-ring, dismiss, timeout, missed, reboot recovery, local-weekday recurrence, and calendar rollover. Schedule-to-evaluator integration, disable-after-terminal, invalid-time reconciliation, target, and bench paths remain open |
+| ALARM-02 | Spring gap shifts once; fall fold rings first occurrence once | Host timezone fixtures for at least two zones | Host fixtures cover 2026 gap/fold mappings for `America/New_York` and `Europe/Berlin`, plus the fully skipped 2011-12-30 date in `Pacific/Apia`, including shift/ambiguity receipts and first-fold-only selection. A separate executable fixture test cross-checks those instants against host IANA `zoneinfo`; complete pinned firmware rule data and target tests remain open |
 | ALARM-03 | Forward correction grace boundaries at 9:59/10:00/10:01 | Host fixtures and target correction test | Host boundary fixture passes; target correction test remains open |
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; ESP-IDF NVS integration and controlled target resets remain open |
