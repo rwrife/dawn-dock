@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence and atomic schedule-storage cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or timezone adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, atomic schedule-storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -31,6 +31,16 @@ The caller must persist `PersistentAlarmState` atomically before acting on any r
 - schema v1 loads with an explicit `legacy-v1-unpinned` timezone marker and can be atomically migrated to v2 without overwriting its rollback slot.
 
 CRC32 detects accidental corruption; it is not authentication. The eventual ESP-IDF backend must provide one exclusive transaction across all store instances, tri-state reads, and atomic replacement per slot (for example, independent NVS blobs); that binding remains unimplemented. These host fault-injection tests do not prove flash endurance, brownout behavior, or physical power-cycle retention.
+
+`resolve_next_occurrence` computes the next weekly occurrence strictly after a UTC anchor from local hour/minute, an ISO weekday mask, and an explicitly named/versioned rule set supplied by an adapter. The pure resolver:
+
+- selects weekdays from the alarm's local calendar rather than UTC;
+- crosses month and year boundaries deterministically;
+- shifts a spring-gap alarm once to the earliest valid local instant on that date and marks `shifted_for_gap`;
+- chooses the first UTC instant in a fall fold, marks `ambiguous_fold`, and never selects the second fold instant as a separate v1 occurrence;
+- rejects mismatched timezone name/version provenance, malformed transition chains, invalid wall times/weekday masks, impossible offsets, and unrepresentable epoch arithmetic.
+
+Host fixtures cover the 2026 spring and fall transitions for `America/New_York` and `Europe/Berlin`, plus the fully skipped 2011-12-30 local date in `Pacific/Apia`. `timezone_fixture_reference_tests` reproducibly checks their UTC mappings against the runner's installed IANA `zoneinfo` database. The checked-in firmware does **not** yet carry or update a complete IANA timezone database, and the host database is reference evidence rather than the firmware's pinned data source. The future adapter must provide immutable rule transitions for the schedule's stored version; these tests are software evidence, not target or RTC behavior.
 
 ## Pinned toolchain
 
@@ -101,7 +111,7 @@ Recovery baseline:
 
 ## Still open in issue #5
 
-- recurrence across calendar boundaries and IANA timezone/DST gap/fold resolution;
+- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of resolved occurrences with stored schedules/evaluation;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
