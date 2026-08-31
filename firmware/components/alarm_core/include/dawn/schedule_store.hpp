@@ -71,6 +71,7 @@ enum class StoreStatus {
   stored,
   unchanged,
   revision_conflict,
+  generation_conflict,
   invalid_snapshot,
   corrupt_store,
   io_error,
@@ -98,8 +99,17 @@ public:
 
   [[nodiscard]] LoadResult load() const;
   [[nodiscard]] StoreResult migrate_to_current_schema();
+  // Commits a new user-visible schedule revision. When a record already
+  // exists, its freshly loaded occurrence journal is carried forward so a
+  // concurrent schedule update cannot erase alarm runtime state.
   [[nodiscard]] StoreResult save(const ScheduleSnapshot &snapshot,
                                  std::uint64_t expected_revision);
+  // Commits only runtime occurrence state under both schedule-revision and
+  // storage-generation CAS. The schedule revision is intentionally unchanged.
+  [[nodiscard]] StoreResult
+  save_occurrence_state(const PersistentAlarmState &occurrence_state,
+                        std::uint64_t expected_revision,
+                        std::uint64_t expected_generation);
 
 private:
   [[nodiscard]] LoadResult load_unlocked() const;

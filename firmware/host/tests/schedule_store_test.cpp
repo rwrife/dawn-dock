@@ -503,6 +503,138 @@ void persisted_write_with_lost_readback_is_idempotent_on_retry() {
          "acknowledgement-loss retry does not rewrite flash");
 }
 
+void occurrence_journal_commits_without_changing_schedule_revision() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  (void)store.save(make_snapshot(1), 0);
+  const auto before = store.load();
+  auto occurrence_state = before.snapshot.occurrence_state;
+  const dawn::AlarmDefinition due{
+      .id = "weekday-wake",
+      .schedule_revision = before.snapshot.revision,
+      .enabled = true,
+      .scheduled_utc_seconds = 1'800'000'000,
+  };
+  const auto admitted =
+      dawn::evaluate_due(due, occurrence_state, 1'800'000'000, 42);
+
+  const auto committed = store.save_occurrence_state(
+      occurrence_state, before.snapshot.revision, before.generation);
+  const auto after = store.load();
+
+  expect(admitted.status == dawn::EvaluationStatus::ringing &&
+             admitted.persist_before_effects,
+         "due occurrence requests persistence before alert output");
+  expect(committed.status == dawn::StoreStatus::stored &&
+             committed.generation == before.generation + 1U,
+         "runtime occurrence journal advances the storage generation");
+  expect(after.status == dawn::LoadStatus::loaded &&
+             after.snapshot.revision == before.snapshot.revision,
+         "runtime journal commit preserves the schedule revision");
+  expect(after.snapshot.occurrence_state.active &&
+             after.snapshot.occurrence_state.active->occurrence_id ==
+                 "weekday-wake:1:1800000000",
+         "runtime journal commit round-trips the admitted occurrence");
+}
+
+void stale_runtime_writer_cannot_overwrite_newer_journal_generation() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  (void)store.save(make_snapshot(1), 0);
+  const auto shared = store.load();
+  auto first_state = shared.snapshot.occurrence_state;
+  const dawn::AlarmDefinition due{
+      .id = "weekday-wake",
+      .schedule_revision = shared.snapshot.revision,
+      .enabled = true,
+      .scheduled_utc_seconds = 1'800'000'000,
+  };
+  (void)dawn::evaluate_due(due, first_state, 1'800'000'000, 42);
+  const auto first = store.save_occurrence_state(
+      first_state, shared.snapshot.revision, shared.generation);
+
+  auto stale_state = shared.snapshot.occurrence_state;
+  stale_state.terminal.push_back(
+      {.occurrence_id = "stale:1:1700000000",
+       .reason = dawn::TerminalReason::invalid_time});
+  const auto stale = store.save_occurrence_state(
+      stale_state, shared.snapshot.revision, shared.generation);
+  const auto after = store.load();
+
+  expect(first.status == dawn::StoreStatus::stored,
+         "first runtime writer commits its occurrence journal");
+  expect(stale.status == dawn::StoreStatus::generation_conflict,
+         "stale runtime writer gets an explicit generation conflict");
+  expect(backend.write_count == 2,
+         "generation conflict performs no additional slot write");
+  expect(after.snapshot.occurrence_state.active &&
+             after.snapshot.occurrence_state.active->occurrence_id ==
+                 "weekday-wake:1:1800000000" &&
+             after.snapshot.occurrence_state.terminal.empty(),
+         "generation conflict preserves the first writer's journal");
+}
+
+void schedule_update_preserves_concurrently_committed_occurrence_journal() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  (void)store.save(make_snapshot(1), 0);
+  const auto before_due = store.load();
+  auto occurrence_state = before_due.snapshot.occurrence_state;
+  const dawn::AlarmDefinition due{
+      .id = "weekday-wake",
+      .schedule_revision = before_due.snapshot.revision,
+      .enabled = true,
+      .scheduled_utc_seconds = 1'800'000'000,
+  };
+  (void)dawn::evaluate_due(due, occurrence_state, 1'800'000'000, 42);
+  (void)store.save_occurrence_state(
+      occurrence_state, before_due.snapshot.revision, before_due.generation);
+
+  auto schedule_update = make_snapshot(2);
+  schedule_update.alarms.front().scheduled_utc_seconds = 1'800'086'400;
+  const auto updated = store.save(schedule_update, 1);
+  const auto after = store.load();
+
+  expect(updated.status == dawn::StoreStatus::stored &&
+             after.snapshot.revision == 2,
+         "schedule update commits the next user-visible revision");
+  expect(after.snapshot.alarms.front().scheduled_utc_seconds == 1'800'086'400,
+         "schedule update replaces committed alarm definitions");
+  expect(after.snapshot.occurrence_state.active &&
+             after.snapshot.occurrence_state.active->occurrence_id ==
+                 "weekday-wake:1:1800000000",
+         "schedule update carries forward the latest active journal");
+}
+
+void runtime_acknowledgement_loss_retry_does_not_rewrite_flash() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  (void)store.save(make_snapshot(1), 0);
+  const auto before = store.load();
+  auto occurrence_state = before.snapshot.occurrence_state;
+  const dawn::AlarmDefinition due{
+      .id = "weekday-wake",
+      .schedule_revision = before.snapshot.revision,
+      .enabled = true,
+      .scheduled_utc_seconds = 1'800'000'000,
+  };
+  (void)dawn::evaluate_due(due, occurrence_state, 1'800'000'000, 42);
+  backend.on_write = [&] { backend.fail_next_read = backend.last_written; };
+
+  const auto uncertain = store.save_occurrence_state(
+      occurrence_state, before.snapshot.revision, before.generation);
+  const auto retried = store.save_occurrence_state(
+      occurrence_state, before.snapshot.revision, before.generation);
+
+  expect(uncertain.status == dawn::StoreStatus::io_error,
+         "runtime read-back failure reports uncertain acknowledgement");
+  expect(retried.status == dawn::StoreStatus::unchanged &&
+             retried.generation == before.generation + 1U,
+         "identical runtime retry recognizes the committed generation");
+  expect(backend.write_count == 2,
+         "runtime acknowledgement-loss retry does not rewrite flash");
+}
+
 } // namespace
 
 int main() {
@@ -521,6 +653,10 @@ int main() {
   concurrent_writer_is_rejected_by_backend_transaction();
   generation_header_corruption_cannot_change_slot_selection();
   persisted_write_with_lost_readback_is_idempotent_on_retry();
+  occurrence_journal_commits_without_changing_schedule_revision();
+  stale_runtime_writer_cannot_overwrite_newer_journal_generation();
+  schedule_update_preserves_concurrently_committed_occurrence_journal();
+  runtime_acknowledgement_loss_retry_does_not_rewrite_flash();
 
   if (failures != 0) {
     std::cerr << failures << " assertion(s) failed\n";
