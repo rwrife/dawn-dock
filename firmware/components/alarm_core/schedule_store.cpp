@@ -677,11 +677,15 @@ StoreResult AtomicScheduleStore::save(const ScheduleSnapshot &snapshot,
   }
   const auto current_revision =
       current.status == LoadStatus::loaded ? current.snapshot.revision : 0;
+  auto committed_snapshot = snapshot;
+  if (current.status == LoadStatus::loaded) {
+    committed_snapshot.occurrence_state = current.snapshot.occurrence_state;
+  }
   const bool acknowledgement_loss_retry =
       expected_revision != std::numeric_limits<std::uint64_t>::max() &&
       expected_revision + 1U == current_revision;
   if (current.status == LoadStatus::loaded &&
-      snapshots_equal(current.snapshot, snapshot) &&
+      snapshots_equal(current.snapshot, committed_snapshot) &&
       (expected_revision == current_revision || acknowledgement_loss_retry)) {
     return {.status = StoreStatus::unchanged,
             .generation = current.generation,
@@ -691,8 +695,8 @@ StoreResult AtomicScheduleStore::save(const ScheduleSnapshot &snapshot,
     return {.status = StoreStatus::revision_conflict,
             .generation = current.generation};
   }
-  if (snapshot.revision != expected_revision + 1U ||
-      !validate_snapshot(snapshot)) {
+  if (committed_snapshot.revision != expected_revision + 1U ||
+      !validate_snapshot(committed_snapshot)) {
     return {.status = StoreStatus::invalid_snapshot,
             .generation = current.generation};
   }
@@ -705,7 +709,7 @@ StoreResult AtomicScheduleStore::save(const ScheduleSnapshot &snapshot,
   const auto destination = current.status == LoadStatus::loaded
                                ? opposite(current.source)
                                : StorageSlot::a;
-  const auto encoded = encode_record(snapshot, generation);
+  const auto encoded = encode_record(committed_snapshot, generation);
   if (!encoded) {
     return {.status = StoreStatus::invalid_snapshot,
             .generation = current.generation,
@@ -727,7 +731,91 @@ StoreResult AtomicScheduleStore::save(const ScheduleSnapshot &snapshot,
                             ? decode_record(written.bytes)
                             : std::nullopt;
   if (!verified || verified->generation != generation ||
-      !snapshots_equal(verified->snapshot, snapshot)) {
+      !snapshots_equal(verified->snapshot, committed_snapshot)) {
+    return {.status = StoreStatus::verification_failed,
+            .generation = current.generation,
+            .destination = destination};
+  }
+  return {.status = StoreStatus::stored,
+          .generation = generation,
+          .destination = destination};
+}
+
+StoreResult AtomicScheduleStore::save_occurrence_state(
+    const PersistentAlarmState &occurrence_state,
+    std::uint64_t expected_revision, std::uint64_t expected_generation) {
+  StorageTransaction transaction(storage_);
+  if (!transaction.active()) {
+    return {.status = StoreStatus::io_error};
+  }
+  const auto current = load_unlocked();
+  if (current.status == LoadStatus::io_error) {
+    return {.status = StoreStatus::io_error};
+  }
+  if (current.status == LoadStatus::corrupt ||
+      current.status == LoadStatus::unsupported_schema ||
+      current.status == LoadStatus::ambiguous) {
+    return {.status = StoreStatus::corrupt_store};
+  }
+  if (current.status != LoadStatus::loaded ||
+      current.snapshot.revision != expected_revision) {
+    return {.status = StoreStatus::revision_conflict,
+            .generation = current.generation,
+            .destination = current.source};
+  }
+  auto updated = current.snapshot;
+  updated.occurrence_state = occurrence_state;
+  if (!validate_snapshot(updated)) {
+    return {.status = StoreStatus::invalid_snapshot,
+            .generation = current.generation,
+            .destination = current.source};
+  }
+  const bool acknowledgement_loss_retry =
+      expected_generation != std::numeric_limits<std::uint64_t>::max() &&
+      expected_generation + 1U == current.generation;
+  if (snapshots_equal(updated, current.snapshot) &&
+      (current.generation == expected_generation ||
+       acknowledgement_loss_retry)) {
+    return {.status = StoreStatus::unchanged,
+            .generation = current.generation,
+            .destination = current.source};
+  }
+  if (current.generation != expected_generation) {
+    return {.status = StoreStatus::generation_conflict,
+            .generation = current.generation,
+            .destination = current.source};
+  }
+  if (current.generation == std::numeric_limits<std::uint64_t>::max()) {
+    return {.status = StoreStatus::invalid_snapshot,
+            .generation = current.generation,
+            .destination = current.source};
+  }
+
+  const auto generation = current.generation + 1U;
+  const auto destination = opposite(current.source);
+  const auto encoded = encode_record(updated, generation);
+  if (!encoded) {
+    return {.status = StoreStatus::invalid_snapshot,
+            .generation = current.generation,
+            .destination = destination};
+  }
+  if (!storage_.write(destination, *encoded)) {
+    return {.status = StoreStatus::io_error,
+            .generation = current.generation,
+            .destination = destination};
+  }
+
+  const auto written = storage_.read(destination);
+  if (written.status == SlotReadStatus::io_error) {
+    return {.status = StoreStatus::io_error,
+            .generation = current.generation,
+            .destination = destination};
+  }
+  const auto verified = written.status == SlotReadStatus::present
+                            ? decode_record(written.bytes)
+                            : std::nullopt;
+  if (!verified || verified->generation != generation ||
+      !snapshots_equal(verified->snapshot, updated)) {
     return {.status = StoreStatus::verification_failed,
             .generation = current.generation,
             .destination = destination};

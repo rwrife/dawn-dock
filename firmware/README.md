@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, atomic schedule-storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, atomic schedule/runtime-journal storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -26,7 +26,9 @@ The caller must persist `PersistentAlarmState` atomically before acting on any r
 - each schema-v2 record carries magic, schema version, monotonically increasing storage generation, payload length, and CRC32 over all selection metadata plus payload;
 - snapshots are bounded to 64 KiB, 32 alarms, bounded identifiers, 32 recent terminal outcomes, and 32 terminal high-watermarks;
 - `save` holds a backend-wide exclusive transaction across both-slot inspection, compare-and-swap schedule revision checks, opposite-slot replacement, re-read, and semantic equality validation;
-- an exact retry after a lost acknowledgement accepts the original expected revision and returns no-write `unchanged`, reducing flash wear without masking a different stale update;
+- schedule updates carry forward the transaction's freshly loaded occurrence journal, so a concurrent due-occurrence commit cannot be erased by a stale schedule payload;
+- `save_occurrence_state` advances storage generation without changing the user-visible schedule revision, requires both revision and generation CAS, and returns distinct revision/generation conflicts;
+- exact schedule and runtime retries after a lost acknowledgement accept only the immediately following committed generation and return no-write `unchanged`, reducing flash wear without masking different stale updates;
 - a corrupt newest slot visibly falls back to the last-known-good generation; equal-generation divergent records, wholly corrupt stores, and intact newer schemas fail closed;
 - schema v1 loads with an explicit `legacy-v1-unpinned` timezone marker and can be atomically migrated to v2 without overwriting its rollback slot.
 
@@ -111,7 +113,7 @@ Recovery baseline:
 
 ## Still open in issue #5
 
-- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of resolved occurrences with stored schedules/evaluation;
+- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of resolved occurrences with the committed-schedule evaluator;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
