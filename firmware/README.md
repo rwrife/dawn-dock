@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, atomic schedule/runtime-journal storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation, atomic schedule/runtime-journal storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -33,6 +33,10 @@ The caller must persist `PersistentAlarmState` atomically before acting on any r
 - schema v1 loads with an explicit `legacy-v1-unpinned` timezone marker and can be atomically migrated to v2 without overwriting its rollback slot.
 
 CRC32 detects accidental corruption; it is not authentication. The eventual ESP-IDF backend must provide one exclusive transaction across all store instances, tri-state reads, and atomic replacement per slot (for example, independent NVS blobs); that binding remains unimplemented. These host fault-injection tests do not prove flash endurance, brownout behavior, or physical power-cycle retention.
+
+`evaluate_committed_schedule` is the storage-backed boundary for already-resolved UTC occurrences. It loads one last-known-good snapshot, sorts definitions by scheduled UTC instant and alarm ID, evaluates them against a private copy of the durable journal, and commits each missed/active transition with revision and generation CAS. It returns an alert edge only after that journal commit succeeds. A competing schedule update suppresses the stale edge and returns the newer generation; an identical concurrent admission is returned as a no-effect duplicate rather than a second alert start. Backend write/verification failure also suppresses effects while leaving `persist_before_effects` visible to diagnostics, and unrepresentable wall-time arithmetic stops the entire pass before later alarms are considered.
+
+This evaluator intentionally consumes the UTC instants currently stored in `ScheduleSnapshot`; it does not yet compute those records from weekly recurrence rules, advance an already-active snooze/timeout lifecycle, reconcile an invalid-time interval, or recover an active occurrence after reboot. Callers must use the existing explicit active/reboot operations for those transitions until a later orchestration layer is implemented. The test suite is host software evidence only, not ESP32 target or physical alarm evidence.
 
 `resolve_next_occurrence` computes the next weekly occurrence strictly after a UTC anchor from local hour/minute, an ISO weekday mask, and an explicitly named/versioned rule set supplied by an adapter. The pure resolver:
 
@@ -113,7 +117,8 @@ Recovery baseline:
 
 ## Still open in issue #5
 
-- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of resolved occurrences with the committed-schedule evaluator;
+- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of weekly recurrence output into stored UTC occurrences;
+- active snooze/timeout and reboot-recovery orchestration around the committed-schedule evaluator;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
