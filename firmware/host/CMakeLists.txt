@@ -6,6 +6,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
+  ../components/alarm_core/committed_schedule_evaluator.cpp
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/schedule_store.cpp
 )
@@ -29,6 +30,17 @@ add_executable(recurrence_resolver_tests tests/recurrence_resolver_test.cpp)
 target_link_libraries(recurrence_resolver_tests PRIVATE dawn_alarm_core)
 target_compile_options(recurrence_resolver_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME recurrence_resolver_tests COMMAND recurrence_resolver_tests)
+
+add_executable(committed_schedule_evaluator_tests
+  tests/committed_schedule_evaluator_test.cpp
+)
+target_link_libraries(committed_schedule_evaluator_tests PRIVATE dawn_alarm_core)
+target_compile_options(committed_schedule_evaluator_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME committed_schedule_evaluator_tests
+  COMMAND committed_schedule_evaluator_tests
+)
 
 add_test(
   NAME timezone_fixture_reference_tests
