@@ -84,6 +84,38 @@ dawn::ScheduleSnapshot snapshot_with_alarm(std::int64_t scheduled_utc) {
   return snapshot;
 }
 
+const dawn::CommittedAlarmEvaluation *find_active_entry(
+    const dawn::CommittedScheduleEvaluation &evaluation) {
+  for (const auto &alarm : evaluation.alarms) {
+    if (alarm.from_active_occurrence) {
+      return &alarm;
+    }
+  }
+  return nullptr;
+}
+
+std::size_t count_start_alerts(
+    const dawn::CommittedScheduleEvaluation &evaluation) {
+  std::size_t count = 0;
+  for (const auto &alarm : evaluation.alarms) {
+    if (alarm.result.start_alert) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+std::size_t count_stop_alerts(
+    const dawn::CommittedScheduleEvaluation &evaluation) {
+  std::size_t count = 0;
+  for (const auto &alarm : evaluation.alarms) {
+    if (alarm.result.stop_alert) {
+      ++count;
+    }
+  }
+  return count;
+}
+
 void due_alarm_is_committed_before_alert_is_exposed() {
   MemorySlotStorage backend;
   dawn::AtomicScheduleStore store(backend);
@@ -299,6 +331,156 @@ void unrepresentable_lateness_stops_later_alarm_admission() {
          "invalid time cannot journal or expose a later due alarm");
 }
 
+void active_snooze_expiry_commits_before_rering_edge() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  expect(store.save(snapshot_with_alarm(1'000), 0).status ==
+             dawn::StoreStatus::stored,
+         "snooze-orchestration fixture schedule is committed");
+
+  const auto admitted = dawn::evaluate_committed_schedule(store, 1'000, 50, true);
+  const auto admitted_state = store.load();
+  expect(admitted.status == dawn::CommittedEvaluationStatus::evaluated &&
+             admitted_state.status == dawn::LoadStatus::loaded &&
+             admitted_state.snapshot.occurrence_state.active,
+         "fixture occurrence is active before snooze orchestration");
+
+  auto snoozed_state = admitted_state.snapshot.occurrence_state;
+  const auto occurrence_id = snoozed_state.active->occurrence_id;
+  const auto snoozed = dawn::request_snooze(snoozed_state, occurrence_id, 60);
+  expect(snoozed.status == dawn::EvaluationStatus::snoozed &&
+             snoozed.persist_before_effects,
+         "fixture occurrence enters durable snooze");
+  expect(store.save_occurrence_state(snoozed_state,
+                                     admitted_state.snapshot.revision,
+                                     admitted_state.generation)
+                 .status == dawn::StoreStatus::stored,
+         "fixture snooze state is committed");
+
+  const auto resumed = dawn::evaluate_committed_schedule(store, 1'000, 600, true);
+  const auto resumed_state = store.load();
+  const auto *active = find_active_entry(resumed);
+
+  expect(resumed.status == dawn::CommittedEvaluationStatus::evaluated &&
+             resumed.generation == 4,
+         "snooze-expiry orchestration completes with updated generation");
+  expect(active && active->alarm_id == "wake" &&
+             active->result.status == dawn::EvaluationStatus::ringing &&
+             active->journal_committed && active->result.start_alert &&
+             !active->result.persist_before_effects,
+         "active snooze expiry is journaled before exposing re-ring");
+  expect(count_start_alerts(resumed) == 1,
+         "snooze expiry emits exactly one start-alert edge");
+  expect(resumed_state.status == dawn::LoadStatus::loaded &&
+             resumed_state.snapshot.occurrence_state.active &&
+             resumed_state.snapshot.occurrence_state.active->snooze_count == 1 &&
+             !resumed_state.snapshot.occurrence_state.active
+                  ->snooze_deadline_monotonic_seconds.has_value(),
+         "durable active state clears the snooze deadline after re-ring");
+  expect(backend.write_count == 4,
+         "schedule, initial admit, snooze, and re-ring each commit once");
+}
+
+void active_timeout_commits_before_stop_edge() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  expect(store.save(snapshot_with_alarm(1'000), 0).status ==
+             dawn::StoreStatus::stored,
+         "timeout-orchestration fixture schedule is committed");
+
+  const auto admitted = dawn::evaluate_committed_schedule(store, 1'000, 100, true);
+  expect(admitted.status == dawn::CommittedEvaluationStatus::evaluated,
+         "fixture occurrence admits before timeout orchestration");
+
+  const auto timed_out = dawn::evaluate_committed_schedule(store, 4'600, 3'700, true);
+  const auto loaded = store.load();
+  const auto *active = find_active_entry(timed_out);
+
+  expect(timed_out.status == dawn::CommittedEvaluationStatus::evaluated &&
+             timed_out.generation == 3,
+         "timeout orchestration completes with updated generation");
+  expect(active && active->result.status == dawn::EvaluationStatus::timed_out &&
+             active->journal_committed && active->result.stop_alert &&
+             !active->result.persist_before_effects,
+         "active timeout is journaled before exposing stop-alert edge");
+  expect(count_stop_alerts(timed_out) == 1,
+         "timeout emits exactly one stop-alert edge");
+  expect(loaded.status == dawn::LoadStatus::loaded &&
+             !loaded.snapshot.occurrence_state.active &&
+             loaded.snapshot.occurrence_state.terminal.size() == 1 &&
+             loaded.snapshot.occurrence_state.terminal.front().reason ==
+                 dawn::TerminalReason::timed_out,
+         "timeout transition is durable with one terminal timeout record");
+  expect(backend.write_count == 3,
+         "schedule, initial admit, and timeout each commit once");
+}
+
+void reboot_recovery_orchestration_resumes_once_per_boot() {
+  MemorySlotStorage backend;
+  dawn::AtomicScheduleStore store(backend);
+  expect(store.save(snapshot_with_alarm(5'000), 0).status ==
+             dawn::StoreStatus::stored,
+         "recovery-orchestration fixture schedule is committed");
+
+  const auto admitted = dawn::evaluate_committed_schedule(store, 5'000, 100, true);
+  const auto admitted_state = store.load();
+  expect(admitted.status == dawn::CommittedEvaluationStatus::evaluated &&
+             admitted_state.status == dawn::LoadStatus::loaded &&
+             admitted_state.snapshot.occurrence_state.active,
+         "fixture occurrence is active before reboot-recovery orchestration");
+
+  auto snoozed_state = admitted_state.snapshot.occurrence_state;
+  const auto occurrence_id = snoozed_state.active->occurrence_id;
+  expect(dawn::request_snooze(snoozed_state, occurrence_id, 110).status ==
+             dawn::EvaluationStatus::snoozed,
+         "fixture occurrence enters snoozed state before reboot");
+  expect(store.save_occurrence_state(snoozed_state,
+                                     admitted_state.snapshot.revision,
+                                     admitted_state.generation)
+                 .status == dawn::StoreStatus::stored,
+         "fixture snooze state is committed before reboot");
+
+  const auto recovered =
+      dawn::evaluate_committed_schedule(store, 8'599, 120, true, "boot-b");
+  const auto duplicate =
+      dawn::evaluate_committed_schedule(store, 8'599, 130, true, "boot-b");
+  const auto loaded = store.load();
+  const auto *recovered_active = find_active_entry(recovered);
+  const auto *duplicate_active = find_active_entry(duplicate);
+
+  expect(recovered.status == dawn::CommittedEvaluationStatus::evaluated &&
+             recovered.generation == 4,
+         "reboot recovery orchestration persists exactly one resume");
+  expect(recovered_active && recovered_active->result.status ==
+                                dawn::EvaluationStatus::ringing &&
+             recovered_active->result.recovered_after_reboot &&
+             recovered_active->journal_committed &&
+             recovered_active->result.start_alert &&
+             !recovered_active->result.persist_before_effects,
+         "reboot recovery resumes ringing only after durable journal update");
+  expect(count_start_alerts(recovered) == 1,
+         "reboot recovery emits exactly one start-alert edge");
+
+  expect(duplicate.status == dawn::CommittedEvaluationStatus::evaluated &&
+             duplicate_active && duplicate_active->result.status ==
+                                     dawn::EvaluationStatus::duplicate &&
+             !duplicate_active->result.start_alert,
+         "same-boot recovery is duplicate-suppressed");
+  expect(count_start_alerts(duplicate) == 0,
+         "duplicate same-boot recovery emits no extra start edge");
+
+  expect(loaded.status == dawn::LoadStatus::loaded &&
+             loaded.snapshot.occurrence_state.active &&
+             loaded.snapshot.occurrence_state.active->recovered_after_reboot &&
+             loaded.snapshot.occurrence_state.active->last_recovery_boot_id ==
+                 "boot-b" &&
+             !loaded.snapshot.occurrence_state.active
+                  ->snooze_deadline_monotonic_seconds.has_value(),
+         "durable recovered state records boot marker and clears snooze");
+  expect(backend.write_count == 4,
+         "schedule, initial admit, snooze, and first recovery each commit once");
+}
+
 } // namespace
 
 int main() {
@@ -308,6 +490,9 @@ int main() {
   concurrent_identical_admission_emits_only_one_alert_edge();
   journal_write_failure_suppresses_alert_effects();
   unrepresentable_lateness_stops_later_alarm_admission();
+  active_snooze_expiry_commits_before_rering_edge();
+  active_timeout_commits_before_stop_edge();
+  reboot_recovery_orchestration_resumes_once_per_boot();
 
   if (failures != 0) {
     std::cerr << failures << " assertion(s) failed\n";
