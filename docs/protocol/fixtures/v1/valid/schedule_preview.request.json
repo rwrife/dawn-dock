@@ -1,0 +1,24 @@
+{
+  "protocol": "dawn-dock/1",
+  "messageId": "req-0002",
+  "sentAt": "2026-09-06T12:00:10Z",
+  "type": "schedule.preview",
+  "expectedRevision": 12,
+  "body": {
+    "alarms": [
+      {
+        "id": "wake-weekdays",
+        "label": "Workday",
+        "enabled": true,
+        "localTime": "07:00",
+        "days": [1, 2, 3, 4, 5],
+        "timezone": "America/New_York",
+        "snoozeMinutes": 9,
+        "volume": 45,
+        "sound": "gentle-1",
+        "source": "manual",
+        "sourceEventId": null
+      }
+    ]
+  }
+}

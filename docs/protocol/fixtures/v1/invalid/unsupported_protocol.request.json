@@ -1,0 +1,9 @@
+{
+  "protocol": "dawn-dock/2",
+  "messageId": "req-9001",
+  "sentAt": "2026-09-06T12:02:00Z",
+  "type": "device.status.get",
+  "body": {
+    "includeDiagnostics": false
+  }
+}

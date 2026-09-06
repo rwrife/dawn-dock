@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, and weekly local-calendar recurrence cores. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, transport, or IANA timezone-rule data adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence cores, and a transport-neutral protocol-envelope preflight validator with canonical contract fixtures. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, authenticated transport session, or IANA timezone-rule data adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -47,6 +47,8 @@ This evaluator intentionally consumes the UTC instants currently stored in `Sche
 - rejects mismatched timezone name/version provenance, malformed transition chains, invalid wall times/weekday masks, impossible offsets, and unrepresentable epoch arithmetic.
 
 Host fixtures cover the 2026 spring and fall transitions for `America/New_York` and `Europe/Berlin`, plus the fully skipped 2011-12-30 local date in `Pacific/Apia`. `timezone_fixture_reference_tests` reproducibly checks their UTC mappings against the runner's installed IANA `zoneinfo` database. The checked-in firmware does **not** yet carry or update a complete IANA timezone database, and the host database is reference evidence rather than the firmware's pinned data source. The future adapter must provide immutable rule transitions for the schedule's stored version; these tests are software evidence, not target or RTC behavior.
+
+`protocol_service` adds a transport-neutral preflight gate for parsed envelopes before any schedule mutation path runs. The validator enforces the `dawn-dock/1` major protocol string, known message types, strict UTC RFC3339 timestamps, bounded message-ID charset/length, mandatory `expectedRevision` on schedule preview/apply, and a 64 KiB serialized-envelope ceiling. A bounded replay window rejects duplicate message IDs without blocking alarm evaluation internals. Canonical valid/invalid fixtures now live under `docs/protocol/fixtures/v1/`, and `protocol_fixture_contract_tests` verifies expected accept/reject codes against that shared fixture manifest.
 
 ## Pinned toolchain
 
@@ -121,7 +123,7 @@ Recovery baseline:
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
-- authenticated revisioned protocol, provisioning, diagnostics, factory reset, and update rollback;
+- authenticated transport/session implementation, device provisioning flow, bounded diagnostics plumbing, factory reset execution path, and update rollback;
 - formatter/static-analysis policy beyond compiler warnings;
 - target execution, hardware-in-the-loop, power-cycle, radio-loss, RTC retention, brightness, debounce, audio, thermal, and long-duration alarm evidence.
 

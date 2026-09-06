@@ -1,0 +1,9 @@
+{
+  "protocol": "dawn-dock/1",
+  "messageId": "req-9005",
+  "sentAt": "2026-09-06T12:02:40Z",
+  "type": "device.self_destruct",
+  "body": {
+    "enabled": true
+  }
+}

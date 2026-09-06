@@ -1,0 +1,10 @@
+{
+  "protocol": "dawn-dock/1",
+  "messageId": "req-9002",
+  "sentAt": "2026-09-06T12:02:10Z",
+  "type": "schedule.apply",
+  "body": {
+    "applyToken": "preview-abc123",
+    "alarms": []
+  }
+}

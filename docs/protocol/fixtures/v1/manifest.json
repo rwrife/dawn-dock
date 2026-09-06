@@ -1,0 +1,55 @@
+{
+  "version": "v1",
+  "fixtures": [
+    {
+      "path": "valid/device_status_get.request.json",
+      "valid": true
+    },
+    {
+      "path": "valid/schedule_preview.request.json",
+      "valid": true
+    },
+    {
+      "path": "valid/schedule_apply.request.json",
+      "valid": true
+    },
+    {
+      "path": "valid/event_sync_receipt.response.json",
+      "valid": true
+    },
+    {
+      "path": "valid/error_revision_conflict.response.json",
+      "valid": true
+    },
+    {
+      "path": "invalid/unsupported_protocol.request.json",
+      "valid": false,
+      "expected_code": "invalid_protocol"
+    },
+    {
+      "path": "invalid/missing_expected_revision.request.json",
+      "valid": false,
+      "expected_code": "expected_revision_required"
+    },
+    {
+      "path": "invalid/oversized_envelope.request.json",
+      "valid": false,
+      "expected_code": "envelope_too_large"
+    },
+    {
+      "path": "invalid/invalid_message_id.request.json",
+      "valid": false,
+      "expected_code": "invalid_message_id"
+    },
+    {
+      "path": "invalid/unknown_type.request.json",
+      "valid": false,
+      "expected_code": "unknown_type"
+    },
+    {
+      "path": "invalid/invalid_sent_at.request.json",
+      "valid": false,
+      "expected_code": "invalid_sent_at"
+    }
+  ]
+}

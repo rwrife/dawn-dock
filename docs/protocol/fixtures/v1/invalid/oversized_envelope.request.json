@@ -1,0 +1,12 @@
+{
+  "protocol": "dawn-dock/1",
+  "messageId": "req-9003",
+  "sentAt": "2026-09-06T12:02:20Z",
+  "type": "device.status.get",
+  "_fixtureMeta": {
+    "serializedSizeBytes": 70000
+  },
+  "body": {
+    "note": "this fixture simulates transport metadata reporting a frame larger than 64KiB"
+  }
+}
