@@ -1,0 +1,13 @@
+{
+  "protocol": "dawn-dock/1",
+  "messageId": "err-0200",
+  "sentAt": "2026-09-06T12:01:00Z",
+  "type": "error.response",
+  "body": {
+    "code": "revision_conflict",
+    "summary": "Schedule revision mismatch",
+    "field": "expectedRevision",
+    "retryable": true,
+    "currentRevision": 13
+  }
+}

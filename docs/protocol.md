@@ -1,6 +1,6 @@
 # Dawn Dock device/app protocol draft
 
-Status: pre-implementation contract. Transport and cryptographic details require an implementation spike and test evidence. Security invariants are normative in [`threat-model.md`](threat-model.md); alarm behavior is normative in [`alarm-semantics.md`](alarm-semantics.md).
+Status: envelope/schema fixtures and host-side validation are implemented for `dawn-dock/1`. Transport and cryptographic session details still require implementation evidence. Security invariants are normative in [`threat-model.md`](threat-model.md); alarm behavior is normative in [`alarm-semantics.md`](alarm-semantics.md).
 
 ## Goals
 
@@ -25,6 +25,16 @@ Firmware exposes one transport-neutral service. The MVP may ship one transport f
 - LAN communication uses authenticated encryption. BLE relies on an authenticated application session in addition to applicable platform link security.
 - Factory reset revokes all pairings. Rate limits and lockouts must not disable local physical alarm controls.
 
+## v1 schemas and fixtures
+
+- Envelope schema: `docs/protocol/schemas/v1/envelope.schema.json`
+- Alarm record schema: `docs/protocol/schemas/v1/alarm.schema.json`
+- Error-body schema: `docs/protocol/schemas/v1/error_response.schema.json`
+- Canonical fixtures: `docs/protocol/fixtures/v1/` (`manifest.json`, `valid/`, `invalid/`)
+- Firmware-host validation entrypoint: `firmware/host/tests/protocol_fixture_contract_test.py`
+
+The fixture manifest is normative for cross-language compatibility tests: app-side and firmware-side tests should consume the same fixture set and expected error codes.
+
 ## Envelope
 
 ```json
@@ -42,8 +52,8 @@ Rules:
 
 - The serialized envelope is at most 64 KiB; operations must define tighter collection/string/recurrence limits where practical.
 - Reject unknown major protocol versions, duplicate/replayed IDs, oversized frames, invalid timestamps where relevant, and malformed bodies.
-- Unknown optional fields may be ignored; unknown message types are errors.
-- `expectedRevision` prevents lost updates. Applying a schedule is atomic.
+- Envelope-level unknown fields are rejected for deterministic interoperability; operation bodies may evolve through explicit schema version updates.
+- `expectedRevision` is required for `schedule.preview` and `schedule.apply` to prevent lost updates. Applying a schedule is atomic.
 - External strings are length-limited and safely rendered; they are never commands.
 
 ## Initial operations
@@ -83,6 +93,23 @@ Calendar imports are normalized in the app. Only fields required for an accepted
 ## Error model
 
 Errors include a stable code, safe user-facing summary, optional field path, current revision where relevant, and retryability flag. Logs must not include Wi-Fi credentials, pairing secrets, or full imported calendar payloads.
+
+Envelope/service-level stable codes (`docs/protocol/schemas/v1/error_response.schema.json`):
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| `invalid_protocol` | Unknown/incompatible major protocol string | No |
+| `unknown_type` | Unsupported message `type` | No |
+| `invalid_message_id` | Missing/invalid `messageId` format | No |
+| `duplicate_message_id` | Replay window already contains this `messageId` | Yes (with a fresh ID) |
+| `invalid_sent_at` | `sentAt` is not strict UTC RFC3339 form | No |
+| `expected_revision_required` | Missing `expectedRevision` for schedule preview/apply | Yes |
+| `envelope_too_large` | Serialized envelope exceeds 64 KiB cap | No |
+| `revision_conflict` | `expectedRevision` does not match device revision | Yes (after refresh) |
+| `schema_invalid` | Body fails message schema validation | No |
+| `payload_semantic_error` | Schema-valid payload breaks domain constraints | No |
+| `unauthorized` | Pairing/session/authentication not valid | Possibly |
+| `rate_limited` | Request refused by anti-abuse throttles | Yes |
 
 ## Security and availability boundaries
 

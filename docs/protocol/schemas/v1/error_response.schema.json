@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dawn-dock.local/protocol/schemas/v1/error_response.schema.json",
+  "title": "Dawn Dock protocol error body v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "summary",
+    "retryable"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "invalid_protocol",
+        "unknown_type",
+        "invalid_message_id",
+        "duplicate_message_id",
+        "invalid_sent_at",
+        "expected_revision_required",
+        "envelope_too_large",
+        "revision_conflict",
+        "schema_invalid",
+        "payload_semantic_error",
+        "unauthorized",
+        "rate_limited"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "field": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "currentRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036854775807
+    }
+  }
+}

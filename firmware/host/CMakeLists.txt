@@ -7,6 +7,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
   ../components/alarm_core/committed_schedule_evaluator.cpp
+  ../components/alarm_core/protocol_service.cpp
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/schedule_store.cpp
 )
@@ -42,7 +43,17 @@ add_test(NAME committed_schedule_evaluator_tests
   COMMAND committed_schedule_evaluator_tests
 )
 
+add_executable(protocol_service_tests tests/protocol_service_test.cpp)
+target_link_libraries(protocol_service_tests PRIVATE dawn_alarm_core)
+target_compile_options(protocol_service_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME protocol_service_tests COMMAND protocol_service_tests)
+
 add_test(
   NAME timezone_fixture_reference_tests
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/timezone_fixture_reference_test.py
+)
+
+add_test(
+  NAME protocol_fixture_contract_tests
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/protocol_fixture_contract_test.py
 )

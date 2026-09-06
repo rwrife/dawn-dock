@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dawn-dock.local/protocol/schemas/v1/envelope.schema.json",
+  "title": "Dawn Dock protocol envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "messageId",
+    "sentAt",
+    "type",
+    "body"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "dawn-dock/1"
+    },
+    "messageId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+    },
+    "sentAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "device.status.get",
+        "time.configure",
+        "schedule.preview",
+        "schedule.apply",
+        "schedule.get",
+        "diagnostics.get",
+        "backup.export",
+        "factory.reset",
+        "event.syncReceipt",
+        "event.alarmState",
+        "error.response"
+      ]
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036854775807
+    },
+    "body": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "schedule.preview",
+              "schedule.apply"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "expectedRevision"
+        ]
+      }
+    }
+  ]
+}
