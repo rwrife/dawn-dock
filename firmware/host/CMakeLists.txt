@@ -9,6 +9,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/committed_schedule_evaluator.cpp
   ../components/alarm_core/protocol_service.cpp
   ../components/alarm_core/recurrence_resolver.cpp
+  ../components/alarm_core/schedule_materializer.cpp
   ../components/alarm_core/schedule_store.cpp
 )
 target_include_directories(dawn_alarm_core PUBLIC
@@ -47,6 +48,11 @@ add_executable(protocol_service_tests tests/protocol_service_test.cpp)
 target_link_libraries(protocol_service_tests PRIVATE dawn_alarm_core)
 target_compile_options(protocol_service_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME protocol_service_tests COMMAND protocol_service_tests)
+
+add_executable(schedule_materializer_tests tests/schedule_materializer_test.cpp)
+target_link_libraries(schedule_materializer_tests PRIVATE dawn_alarm_core)
+target_compile_options(schedule_materializer_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME schedule_materializer_tests COMMAND schedule_materializer_tests)
 
 add_test(
   NAME timezone_fixture_reference_tests

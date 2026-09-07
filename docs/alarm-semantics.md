@@ -1,7 +1,7 @@
 # Deterministic alarm semantics
 
 **Baseline:** v0.1
-**Evidence status:** normative behavior specification with partial host software-test coverage in `firmware/host`; occurrence lifecycle, committed-snapshot UTC occurrence evaluation (including active snooze/timeout progression and reboot recovery through the persisted evaluator path), race-safe dual-slot schedule/runtime-journal storage, and pure weekly recurrence against supplied versioned timezone transitions are covered. A complete pinned IANA rule-data adapter, recurrence-to-snapshot integration, invalid-time reconciliation, target execution, and bench evidence remain open.
+**Evidence status:** normative behavior specification with partial host software-test coverage in `firmware/host`; occurrence lifecycle, committed-snapshot UTC occurrence evaluation (including active snooze/timeout progression and reboot recovery through the persisted evaluator path), race-safe dual-slot schedule/runtime-journal storage, pure weekly recurrence against supplied versioned timezone transitions, and deterministic recurrence-to-committed-UTC materialization are covered. A complete pinned IANA rule-data adapter, end-to-end runtime schedule plumbing, invalid-time reconciliation, target execution, and bench evidence remain open.
 
 ## Principles
 
