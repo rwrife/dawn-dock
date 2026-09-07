@@ -4,6 +4,7 @@ idf_component_register(
     "committed_schedule_evaluator.cpp"
     "protocol_service.cpp"
     "recurrence_resolver.cpp"
+    "schedule_materializer.cpp"
     "schedule_store.cpp"
   INCLUDE_DIRS "include"
 )

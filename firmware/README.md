@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence cores, and a transport-neutral protocol-envelope preflight validator with canonical contract fixtures. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, authenticated transport session, or IANA timezone-rule data adapter is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence plus deterministic recurrence-to-committed-UTC materialization cores, and a transport-neutral protocol-envelope preflight validator with canonical contract fixtures. No firmware has been flashed to physical hardware, and no ESP-IDF NVS adapter, RTC, display, controls, audio, authenticated transport session, or IANA timezone-rule data adapter is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -36,7 +36,7 @@ CRC32 detects accidental corruption; it is not authentication. The eventual ESP-
 
 `evaluate_committed_schedule` is the storage-backed boundary for already-resolved UTC occurrences. It loads one last-known-good snapshot, sorts definitions by scheduled UTC instant and alarm ID, evaluates them against a private copy of the durable journal, and commits each missed/active transition with revision and generation CAS. It returns an alert edge only after that journal commit succeeds. A competing schedule update suppresses the stale edge and returns the newer generation; an identical concurrent admission is returned as a no-effect duplicate rather than a second alert start. Backend write/verification failure also suppresses effects while leaving `persist_before_effects` visible to diagnostics, and unrepresentable wall-time arithmetic stops the entire pass before later alarms are considered.
 
-This evaluator intentionally consumes the UTC instants currently stored in `ScheduleSnapshot`; it does not yet compute those records from weekly recurrence rules or reconcile an invalid-time interval with multiple crossed occurrences. Active snooze/timeout progression and reboot recovery now run through the same persisted evaluator path before exposing alert edges. The test suite is host software evidence only, not ESP32 target or physical alarm evidence.
+This evaluator intentionally consumes the UTC instants currently stored in `ScheduleSnapshot`. `materialize_next_schedule_entries` now provides an upstream recurrence-to-UTC step for those committed entries, including deterministic ordering and fail-closed behavior on rule mismatch/corruption. Invalid-time reconciliation across multiple crossed occurrences remains open. Active snooze/timeout progression and reboot recovery now run through the same persisted evaluator path before exposing alert edges. The test suite is host software evidence only, not ESP32 target or physical alarm evidence.
 
 `resolve_next_occurrence` computes the next weekly occurrence strictly after a UTC anchor from local hour/minute, an ISO weekday mask, and an explicitly named/versioned rule set supplied by an adapter. The pure resolver:
 
@@ -119,7 +119,7 @@ Recovery baseline:
 
 ## Still open in issue #5
 
-- ESP-IDF rule-data adapter carrying a pinned IANA database and integration of weekly recurrence output into stored UTC occurrences;
+- ESP-IDF rule-data adapter carrying a pinned IANA database and end-to-end runtime plumbing of recurrence materialization into persisted schedule updates;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS slot adapter, brownout/flash fault behavior, and 100-cycle physical persistence evidence;
 - hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
