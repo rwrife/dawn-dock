@@ -1,6 +1,6 @@
 # Dawn Dock device/app protocol draft
 
-Status: envelope/schema fixtures and host-side validation are implemented for `dawn-dock/1`. Transport and cryptographic session details still require implementation evidence. Security invariants are normative in [`threat-model.md`](threat-model.md); alarm behavior is normative in [`alarm-semantics.md`](alarm-semantics.md).
+Status: envelope/schema fixtures, host-side envelope validation, bounded JSON body parsing, and body-schema validation with stable `schema_invalid`/`payload_semantic_error` codes are implemented for `dawn-dock/1`. Transport and cryptographic session details still require implementation evidence. Security invariants are normative in [`threat-model.md`](threat-model.md); alarm behavior is normative in [`alarm-semantics.md`](alarm-semantics.md).
 
 ## Goals
 
@@ -31,9 +31,9 @@ Firmware exposes one transport-neutral service. The MVP may ship one transport f
 - Alarm record schema: `docs/protocol/schemas/v1/alarm.schema.json`
 - Error-body schema: `docs/protocol/schemas/v1/error_response.schema.json`
 - Canonical fixtures: `docs/protocol/fixtures/v1/` (`manifest.json`, `valid/`, `invalid/`)
-- Firmware-host validation entrypoint: `firmware/host/tests/protocol_fixture_contract_test.py`
+- Firmware-host validation entrypoints: `firmware/host/tests/protocol_fixture_contract_test.py` (cross-language contract mirror) and `firmware/host/tests/protocol_fixture_cross_language_test.cpp` (drives the same manifest through the C++ envelope preflight, parser, and body validator)
 
-The fixture manifest is normative for cross-language compatibility tests: app-side and firmware-side tests should consume the same fixture set and expected error codes.
+The fixture manifest is normative for cross-language compatibility tests: app-side and firmware-side tests should consume the same fixture set and expected error codes. Body-level violations inside otherwise-envelope-valid fixtures are reported with the stable codes `schema_invalid` (malformed payload) or `payload_semantic_error` (schema-valid payload breaking domain bounds such as the 32-alarm storage limit or duplicate alarm ids).
 
 ## Envelope
 
