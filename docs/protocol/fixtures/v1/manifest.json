@@ -50,6 +50,16 @@
       "path": "invalid/invalid_sent_at.request.json",
       "valid": false,
       "expected_code": "invalid_sent_at"
+    },
+    {
+      "path": "invalid/schedule_alarm_bad_snooze.request.json",
+      "valid": false,
+      "expected_code": "schema_invalid"
+    },
+    {
+      "path": "invalid/schedule_duplicate_alarm_id.request.json",
+      "valid": false,
+      "expected_code": "payload_semantic_error"
     }
   ]
 }

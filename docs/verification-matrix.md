@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, and supplied-rule weekly recurrence host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
 
 ## Evidence classes
 
@@ -42,7 +42,7 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ENV-05 | Non-color states, large text, tactile primary controls | Static UI review, widget/accessibility tests, device/app bench review | Specified only |
 | CONN-01 | 72 h representative alarm run with radios disabled | Software fixture then bench integration run | Specified only |
 | CONN-02 | 120 s physical pairing window, unique credentials, no default | Protocol/security static review; software/target negative tests | Specified only |
-| CONN-03 | Version/64 KiB/schema/revision/replay validation | Schema/unit/fuzz/interoperability tests; target overload tests | Host envelope/unit fixtures now validate protocol major version, known message type, strict UTC timestamp format, message-ID bounds, required schedule `expectedRevision`, 64 KiB envelope cap, and bounded replay duplicate rejection via shared canonical fixtures (`docs/protocol/fixtures/v1`) plus `protocol_service_tests`/`protocol_fixture_contract_tests`. Authenticated transport/session, full body-schema parser integration, fuzzing corpus, and target overload execution remain open |
+| CONN-03 | Version/64 KiB/schema/revision/replay validation | Schema/unit/fuzz/interoperability tests; target overload tests | Host envelope/unit fixtures now validate protocol major version, known message type, strict UTC timestamp format, message-ID bounds, required schedule `expectedRevision`, 64 KiB envelope cap, and bounded replay duplicate rejection via shared canonical fixtures (`docs/protocol/fixtures/v1`) plus `protocol_service_tests`/`protocol_fixture_contract_tests`. Body-schema integration is now host-tested: a bounded JSON subset parser (depth/node/string limits, int64-only numbers, UTF-8/surrogate/escape validation, duplicate-key/trailing-content rejection) feeds a schema-faithful body validator for schedule alarm records, error responses, and sync receipts with stable `schema_invalid`/`payload_semantic_error` codes and JSON-pointer field paths (`message_body_validator_tests`, `protocol_fixture_cross_language_tests`, and two new invalid fixtures). Authenticated transport/session, fuzzing corpus, and target overload execution remain open |
 | CONN-04 | Optional service failure cannot delay alarm | Architecture/static review; overload/radio-loss software and bench tests | Specified only |
 | CONN-05 | Selected fields only, local export/erase; no microphone/camera hardware | Static hardware/data-model review; unit tests; post-erase inspection | Microphone-free component selection complete; software/storage evidence open |
 | CONN-06 | Physical-confirmed reset and USB recovery without cloud | Software state tests and target recovery/erase bench test | Specified only |

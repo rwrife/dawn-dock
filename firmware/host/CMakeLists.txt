@@ -7,6 +7,8 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
   ../components/alarm_core/committed_schedule_evaluator.cpp
+  ../components/alarm_core/json_parser.cpp
+  ../components/alarm_core/message_body_validator.cpp
   ../components/alarm_core/protocol_service.cpp
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/schedule_materializer.cpp
@@ -48,6 +50,33 @@ add_executable(protocol_service_tests tests/protocol_service_test.cpp)
 target_link_libraries(protocol_service_tests PRIVATE dawn_alarm_core)
 target_compile_options(protocol_service_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME protocol_service_tests COMMAND protocol_service_tests)
+
+add_executable(message_body_validator_tests
+  tests/message_body_validator_test.cpp
+)
+target_link_libraries(message_body_validator_tests PRIVATE dawn_alarm_core)
+target_compile_options(message_body_validator_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME message_body_validator_tests
+  COMMAND message_body_validator_tests
+)
+
+add_executable(protocol_fixture_cross_language_tests
+  tests/protocol_fixture_cross_language_test.cpp
+)
+target_link_libraries(protocol_fixture_cross_language_tests PRIVATE
+  dawn_alarm_core
+)
+target_compile_definitions(protocol_fixture_cross_language_tests PRIVATE
+  DAWN_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/../../docs/protocol/fixtures/v1"
+)
+target_compile_options(protocol_fixture_cross_language_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME protocol_fixture_cross_language_tests
+  COMMAND protocol_fixture_cross_language_tests
+)
 
 add_executable(schedule_materializer_tests tests/schedule_materializer_test.cpp)
 target_link_libraries(schedule_materializer_tests PRIVATE dawn_alarm_core)
