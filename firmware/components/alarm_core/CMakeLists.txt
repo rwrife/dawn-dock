@@ -1,6 +1,7 @@
 idf_component_register(
   SRCS
     "alarm_engine.cpp"
+    "committed_alarm_disable.cpp"
     "committed_schedule_evaluator.cpp"
     "json_parser.cpp"
     "message_body_validator.cpp"
