@@ -6,6 +6,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
+  ../components/alarm_core/committed_alarm_disable.cpp
   ../components/alarm_core/committed_schedule_evaluator.cpp
   ../components/alarm_core/json_parser.cpp
   ../components/alarm_core/message_body_validator.cpp
@@ -82,6 +83,17 @@ add_executable(schedule_materializer_tests tests/schedule_materializer_test.cpp)
 target_link_libraries(schedule_materializer_tests PRIVATE dawn_alarm_core)
 target_compile_options(schedule_materializer_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME schedule_materializer_tests COMMAND schedule_materializer_tests)
+
+add_executable(committed_alarm_disable_tests
+  tests/committed_alarm_disable_test.cpp
+)
+target_link_libraries(committed_alarm_disable_tests PRIVATE dawn_alarm_core)
+target_compile_options(committed_alarm_disable_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME committed_alarm_disable_tests
+  COMMAND committed_alarm_disable_tests
+)
 
 add_test(
   NAME timezone_fixture_reference_tests
