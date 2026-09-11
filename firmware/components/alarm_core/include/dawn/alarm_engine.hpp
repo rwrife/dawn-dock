@@ -112,4 +112,30 @@ struct EvaluationResult {
     PersistentAlarmState& state, std::int64_t wall_utc_seconds,
     const std::string& boot_id);
 
+// True when the state can durably journal a terminal outcome for
+// `alarm_id`: either the alarm already carries a terminal high-watermark
+// or the watermark table still has capacity. Callers that batch journal
+// records must check every alarm up front and fail closed when any alarm
+// cannot be tracked.
+[[nodiscard]] bool journal_can_accept(const PersistentAlarmState& state,
+                                      const std::string& alarm_id);
+
+// Appends a terminal record with the given reason and raises the alarm's
+// terminal high-watermark, reusing the engine's dedup and retention
+// rules. Returns false without mutating the state when the watermark
+// table is full, so batched journaling stays all-or-nothing.
+[[nodiscard]] bool journal_terminal(
+    PersistentAlarmState& state, const std::string& alarm_id,
+    const std::string& occurrence_id, std::int64_t scheduled_utc_seconds,
+    TerminalReason reason);
+
+// Places a recovered late ring into the active slot after an invalid
+// interval, recording the actual resume instants. Fails closed without
+// mutation when the active slot is occupied or the alarm's terminal
+// outcome could not be tracked afterwards.
+[[nodiscard]] bool begin_recovered_ring(
+    PersistentAlarmState& state, const std::string& alarm_id,
+    const std::string& occurrence_id, std::int64_t scheduled_utc_seconds,
+    std::int64_t wall_utc_seconds, std::int64_t monotonic_seconds);
+
 }  // namespace dawn

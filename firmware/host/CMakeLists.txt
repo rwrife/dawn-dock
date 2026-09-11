@@ -8,6 +8,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
   ../components/alarm_core/committed_alarm_disable.cpp
   ../components/alarm_core/committed_schedule_evaluator.cpp
+  ../components/alarm_core/invalid_time_recovery.cpp
   ../components/alarm_core/json_parser.cpp
   ../components/alarm_core/message_body_validator.cpp
   ../components/alarm_core/protocol_service.cpp
@@ -94,6 +95,15 @@ target_compile_options(committed_alarm_disable_tests PRIVATE
 add_test(NAME committed_alarm_disable_tests
   COMMAND committed_alarm_disable_tests
 )
+
+add_executable(invalid_time_recovery_tests
+  tests/invalid_time_recovery_test.cpp
+)
+target_link_libraries(invalid_time_recovery_tests PRIVATE dawn_alarm_core)
+target_compile_options(invalid_time_recovery_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME invalid_time_recovery_tests COMMAND invalid_time_recovery_tests)
 
 add_test(
   NAME timezone_fixture_reference_tests
