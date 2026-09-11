@@ -3,6 +3,7 @@ idf_component_register(
     "alarm_engine.cpp"
     "committed_alarm_disable.cpp"
     "committed_schedule_evaluator.cpp"
+    "invalid_time_recovery.cpp"
     "json_parser.cpp"
     "message_body_validator.cpp"
     "protocol_service.cpp"

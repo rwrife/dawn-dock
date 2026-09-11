@@ -320,4 +320,44 @@ EvaluationResult recover_after_reboot(PersistentAlarmState& state,
   return result;
 }
 
+bool journal_can_accept(const PersistentAlarmState& state,
+                        const std::string& alarm_id) {
+  return can_track_terminal(state, alarm_id);
+}
+
+bool journal_terminal(PersistentAlarmState& state,
+                      const std::string& alarm_id,
+                      const std::string& occurrence_id,
+                      std::int64_t scheduled_utc_seconds,
+                      TerminalReason reason) {
+  if (!can_track_terminal(state, alarm_id)) {
+    return false;
+  }
+  record_terminal_high_watermark(state, alarm_id, scheduled_utc_seconds);
+  append_terminal(state, {occurrence_id, reason});
+  return true;
+}
+
+bool begin_recovered_ring(PersistentAlarmState& state,
+                          const std::string& alarm_id,
+                          const std::string& occurrence_id,
+                          std::int64_t scheduled_utc_seconds,
+                          std::int64_t wall_utc_seconds,
+                          std::int64_t monotonic_seconds) {
+  if (state.active) {
+    return false;
+  }
+  if (!can_track_terminal(state, alarm_id)) {
+    return false;
+  }
+  ActiveOccurrence active;
+  active.alarm_id = alarm_id;
+  active.occurrence_id = occurrence_id;
+  active.scheduled_utc_seconds = scheduled_utc_seconds;
+  active.first_ring_utc_seconds = wall_utc_seconds;
+  active.first_ring_monotonic_seconds = monotonic_seconds;
+  state.active = std::move(active);
+  return true;
+}
+
 }  // namespace dawn
