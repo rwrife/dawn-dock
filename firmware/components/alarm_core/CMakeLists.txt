@@ -10,6 +10,7 @@ idf_component_register(
     "recurrence_resolver.cpp"
     "schedule_materializer.cpp"
     "schedule_store.cpp"
+    "tzif_rules.cpp"
   INCLUDE_DIRS "include"
 )
 

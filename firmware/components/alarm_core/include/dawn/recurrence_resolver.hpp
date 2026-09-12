@@ -69,8 +69,9 @@ struct ResolvedOccurrence {
 };
 
 // Returns the first scheduled occurrence strictly after after_utc_seconds.
-// Rules are supplied by a future pinned timezone-database adapter; this pure
-// component performs no network, filesystem, or platform timezone lookup.
+// Rules are supplied by the caller (see dawn/tzif_rules.hpp for the pinned
+// TZif-to-rules adapter); this pure component performs no network,
+// filesystem, or platform timezone lookup.
 [[nodiscard]] ResolvedOccurrence
 resolve_next_occurrence(const WeeklyAlarmSchedule &schedule,
                         const TimezoneRules &rules,

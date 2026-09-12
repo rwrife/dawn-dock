@@ -15,6 +15,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/schedule_materializer.cpp
   ../components/alarm_core/schedule_store.cpp
+  ../components/alarm_core/tzif_rules.cpp
 )
 target_include_directories(dawn_alarm_core PUBLIC
   ../components/alarm_core/include
@@ -104,6 +105,21 @@ target_compile_options(invalid_time_recovery_tests PRIVATE
   -Wall -Wextra -Wpedantic -Werror
 )
 add_test(NAME invalid_time_recovery_tests COMMAND invalid_time_recovery_tests)
+
+add_executable(tzif_rules_tests tests/tzif_rules_test.cpp)
+target_link_libraries(tzif_rules_tests PRIVATE dawn_alarm_core)
+target_compile_definitions(tzif_rules_tests PRIVATE
+  DAWN_TZIF_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/tzif/2026c"
+)
+target_compile_options(tzif_rules_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME tzif_rules_tests COMMAND tzif_rules_tests)
+
+add_test(
+  NAME tzif_adapter_reference_tests
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/tzif_adapter_reference_test.py
+)
 
 add_test(
   NAME timezone_fixture_reference_tests
