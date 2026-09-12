@@ -1,0 +1,64 @@
+{
+  "iana_version": "2026c",
+  "description": "Pinned TZif (RFC 8536) reference records extracted from IANA tzdata 2026c for adapter host tests. The adapter consumes only the version-2+ block; these files are byte-identical to the zoneinfo records.",
+  "files": [
+    {
+      "zone": "America/New_York",
+      "path": "America__New_York.tzif",
+      "sha256": "e9ed07d7bee0c76a9d442d091ef1f01668fee7c4f26014c0a868b19fe6c18a95"
+    },
+    {
+      "zone": "Europe/Berlin",
+      "path": "Europe__Berlin.tzif",
+      "sha256": "5ee475f71a0fc1a32faeb849f8c39c6e7aa66d6d41ec742b97b3a7436b3b0701"
+    },
+    {
+      "zone": "Pacific/Apia",
+      "path": "Pacific__Apia.tzif",
+      "sha256": "726e92e83d15747b1da8b264ba95091faa4bca76a8e50970a4c99123d9b9647e"
+    }
+  ],
+  "occurrence_checks": [
+    {
+      "kind": "gap",
+      "zone": "America/New_York",
+      "label": "spring_gap_2026",
+      "local": "2026-03-08T02:30",
+      "expected_local": "2026-03-08T03:00",
+      "expected_utc": "2026-03-08T07:00:00Z"
+    },
+    {
+      "kind": "fold",
+      "zone": "America/New_York",
+      "label": "fall_fold_2026",
+      "local": "2026-11-01T01:30",
+      "expected_utc": "2026-11-01T05:30:00Z"
+    },
+    {
+      "kind": "gap",
+      "zone": "Europe/Berlin",
+      "label": "spring_gap_2026",
+      "local": "2026-03-29T02:30",
+      "expected_local": "2026-03-29T03:00",
+      "expected_utc": "2026-03-29T01:00:00Z"
+    },
+    {
+      "kind": "fold",
+      "zone": "Europe/Berlin",
+      "label": "fall_fold_2026",
+      "local": "2026-10-25T02:30",
+      "expected_utc": "2026-10-25T00:30:00Z"
+    },
+    {
+      "kind": "exact",
+      "zone": "Pacific/Apia",
+      "label": "post_skipped_day_2011",
+      "local": "2011-12-31T07:00",
+      "expected_utc": "2011-12-30T17:00:00Z"
+    }
+  ],
+  "apia_skipped_local_date": {
+    "skipped_local_date": "2011-12-30",
+    "next_valid_local_instant_utc": "2011-12-30T17:00:00Z"
+  }
+}
