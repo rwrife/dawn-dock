@@ -13,6 +13,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/message_body_validator.cpp
   ../components/alarm_core/protocol_service.cpp
   ../components/alarm_core/recurrence_resolver.cpp
+  ../components/alarm_core/runtime_coordinator.cpp
   ../components/alarm_core/schedule_materializer.cpp
   ../components/alarm_core/schedule_store.cpp
   ../components/alarm_core/tzif_rules.cpp
@@ -105,6 +106,15 @@ target_compile_options(invalid_time_recovery_tests PRIVATE
   -Wall -Wextra -Wpedantic -Werror
 )
 add_test(NAME invalid_time_recovery_tests COMMAND invalid_time_recovery_tests)
+
+add_executable(runtime_coordinator_tests
+  tests/runtime_coordinator_test.cpp
+)
+target_link_libraries(runtime_coordinator_tests PRIVATE dawn_alarm_core)
+target_compile_options(runtime_coordinator_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME runtime_coordinator_tests COMMAND runtime_coordinator_tests)
 
 add_executable(tzif_rules_tests tests/tzif_rules_test.cpp)
 target_link_libraries(tzif_rules_tests PRIVATE dawn_alarm_core)
