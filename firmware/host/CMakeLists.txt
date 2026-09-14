@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(dawn_dock_alarm_host LANGUAGES CXX)
 
 include(CTest)
+find_package(Threads REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_library(dawn_alarm_core
@@ -23,6 +24,21 @@ target_include_directories(dawn_alarm_core PUBLIC
 )
 target_compile_features(dawn_alarm_core PUBLIC cxx_std_20)
 target_compile_options(dawn_alarm_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
+add_executable(nvs_slot_storage_tests
+  tests/nvs_slot_storage_test.cpp
+  ../main/main.cpp
+  ../components/nvs_storage/nvs_slot_storage.cpp
+)
+target_include_directories(nvs_slot_storage_tests PRIVATE
+  fakes ../components/nvs_storage/include
+)
+target_link_libraries(nvs_slot_storage_tests PRIVATE dawn_alarm_core Threads::Threads)
+target_compile_options(nvs_slot_storage_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME nvs_slot_storage_tests COMMAND nvs_slot_storage_tests)
+add_test(NAME nvs_set_failure_tests COMMAND nvs_slot_storage_tests set-failure)
+add_test(NAME nvs_commit_failure_tests COMMAND nvs_slot_storage_tests commit-failure)
+add_test(NAME nvs_startup_tests COMMAND nvs_slot_storage_tests startup)
 
 add_executable(alarm_engine_tests tests/alarm_engine_test.cpp)
 target_link_libraries(alarm_engine_tests PRIVATE dawn_alarm_core)
