@@ -1,51 +1,70 @@
-# Companion app plan
+# Dawn Dock companion bootstrap
 
-Status: plan only; no Flutter project or build evidence exists yet.
+This is an offline, in-memory Flutter demo backed by a fake device. Its Dart
+application behavior uses no account, network operation, runtime permission,
+telemetry, or persistence. The displayed next alarm is illustrative and is not
+derived from the current time. The demo never executes an alarm or sends a
+confirmation to real hardware.
 
-Normative local-first/privacy boundaries are defined in [`docs/system-architecture.md`](../docs/system-architecture.md) and [`docs/threat-model.md`](../docs/threat-model.md). Alarm previews must implement [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), with evidence traced in [`docs/verification-matrix.md`](../docs/verification-matrix.md).
+The screen lets a reviewer preview one hardcoded schedule change, cancel it, or
+explicitly apply it to fake state. Applying advances the in-memory revision once
+and produces a demo-only receipt. **Reset demo** restores the initial state. The
+controller is intentionally non-persistent, so restoring the initial state after
+a real app restart is implementation intent, not measured evidence. The host
+test only removes and reconstructs the widget tree within the same test process.
 
-## Responsibilities
+This bootstrap is not evidence of pairing, transport, protocol conformance,
+device storage, calendar import, backup/export, notifications, or alarm
+execution. Those remain part of open parent issue #6. The architectural and
+privacy boundaries are defined in [system architecture](../docs/system-architecture.md),
+the [threat model](../docs/threat-model.md), and the future
+[protocol](../docs/protocol.md).
 
-- Discover or manually address a Dawn Dock on the local network/BLE.
-- Pair with an explicit device-displayed code/QR flow and manage local credentials.
-- Create recurring alarms, preview a device/app diff, and explicitly apply a revision.
-- Import user-selected `.ics` files and turn relevant events into reviewable alarm suggestions.
-- Display device time, next alarm, firmware/protocol version, connectivity, and diagnostics.
-- Export/restore user-owned JSON backup and erase local/device data.
-- Keep optional weather endpoint configuration outside the alarm-critical path.
+## Toolchain and quickstart
 
-## Target platforms and framework
+The repository pins Flutter 3.47.2 and its bundled Dart 3.13.2 in
+`.flutter-version`, CI, and `tool/verify_flutter_version.sh`. With the approved
+SDK installed at `/tmp/flutter-3.47.2`:
 
-Flutter stable with Dart targets Android and iOS first. Windows and macOS companions follow once shared domain/protocol code and platform adapters are stable. Platform-specific BLE, LAN discovery, file picker, secure storage, and permissions remain behind interfaces.
+```bash
+cd app
+FLUTTER_BIN=/tmp/flutter-3.47.2/bin/flutter ./tool/verify_flutter_version.sh
+/tmp/flutter-3.47.2/bin/flutter pub get --enforce-lockfile
+/tmp/flutter-3.47.2/bin/dart format --output=none --set-exit-if-changed lib test
+/tmp/flutter-3.47.2/bin/flutter analyze
+/tmp/flutter-3.47.2/bin/flutter test --coverage
+/tmp/flutter-3.47.2/bin/flutter run
+```
 
-## Setup flow
+`flutter run` needs an Android or iOS development target configured on the
+host. Local widget tests are host software evidence, not a physical-device test.
 
-1. User chooses LAN discovery, BLE discovery, or manual address.
-2. Device opens a short physical pairing window and displays a unique code.
-3. App confirms the device fingerprint/name and stores the resulting credential in platform secure storage.
-4. User sets time/timezone, creates or imports alarms, reviews changes, then applies them.
-5. Both sides display the same schedule revision and next alarm.
+The Android debug and profile manifests declare `android.permission.INTERNET`
+for Flutter development tooling. iOS development tooling may also use the local
+network. Those tooling behaviors are separate from the fake demo's application
+behavior. The current build gates are development builds and do not prove final
+release permission configuration; release manifest and packaged-app permission
+review remain open.
 
-## Local data ownership
+Android and iOS editable projects are committed. The companion CI workflow
+will run quality checks, compile an Android debug APK, and compile an unsigned
+iOS simulator app without executing a simulator. CI results are not claimed
+until that workflow actually runs.
 
-- Local storage contains paired-device metadata, schedule drafts, accepted/import provenance, and backup history.
-- No account, analytics, or remote database is required.
-- JSON backup and `.ics` import are documented and versioned.
-- Device credentials use Keychain/Keystore or OS-equivalent secure storage.
-- Users can remove one device, erase imported event details, or reset all app data.
+Windows and macOS desktop targets are not enabled yet. In the future, from
+`app/` on appropriately configured hosts, enable them with:
 
-## Permissions
+```bash
+flutter create --platforms=windows,macos .
+```
 
-- Local-network/Bluetooth permissions are requested only when the selected transport requires them.
-- File access uses a user-invoked picker for `.ics` import and JSON export/restore.
-- Broad calendar permission is not required for the MVP; selected-file import is preferred.
-- Notifications are optional convenience reminders and never substitute for device alarm execution.
-- No microphone, camera, location, contacts, or background-health permission is planned.
+Before enabling desktop targets, review the generated changes and retain the
+pinned SDK and fake-only boundary.
 
-## Accessibility
+## Accessibility evidence and gaps
 
-Support screen readers, semantic labels, dynamic type, logical focus order, keyboard navigation on desktop, minimum touch targets, high contrast, reduced motion, and non-color-only status indicators. Pairing/sync success and errors must be announced accessibly.
-
-## Protocol boundary
-
-The app never writes raw storage or hardware state. It uses the versioned contract in `docs/protocol.md`, sends expected schedule revisions, validates device responses, and treats external data as untrusted input. Calendar-derived alarms remain suggestions until accepted.
+Widget tests exercise semantic status labels, 48 logical-pixel action targets,
+AA text/theme contrast calculations, logical Tab/Enter operation, a 320 logical
+pixel layout at 200% text scaling, and reduced-motion behavior. Physical screen
+reader, switch-control, platform high-contrast, and real-device usability tests
+remain open.

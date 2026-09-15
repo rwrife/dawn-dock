@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; no target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests; no companion target execution or physical test evidence
 
 ## Evidence classes
 
@@ -39,7 +39,7 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ENV-02 | No release until user-surface limit is selected and measured at 35 °C | Risk/material review then bench thermal measurement | Open decision |
 | ENV-03 | Blackout and physical brightness override work offline | Software fixture + target bench network-disabled test | Specified only |
 | ENV-04 | No fan/unintended periodic sound | BOM/static review; quiet-room bench observation and audio capture | Fanless and microphone-free hardware selected; quiet-room evidence open |
-| ENV-05 | Non-color states, large text, tactile primary controls | Static UI review, widget/accessibility tests, device/app bench review | Specified only |
+| ENV-05 | Non-color states, large text, tactile primary controls | Static UI review, widget/accessibility tests, device/app bench review | Companion host widget tests cover semantic labels, non-color text status, 48 logical-pixel action targets, computed AA theme contrast, logical Tab/Enter actions, 320 logical-pixel width at 200% text, and reduced-motion switching. Physical screen-reader, platform high-contrast, switch-control, real-device usability, and tactile clock controls remain open |
 | CONN-01 | 72 h representative alarm run with radios disabled | Software fixture then bench integration run | Specified only |
 | CONN-02 | 120 s physical pairing window, unique credentials, no default | Protocol/security static review; software/target negative tests | Specified only |
 | CONN-03 | Version/64 KiB/schema/revision/replay validation | Schema/unit/fuzz/interoperability tests; target overload tests | Host envelope/unit fixtures now validate protocol major version, known message type, strict UTC timestamp format, message-ID bounds, required schedule `expectedRevision`, 64 KiB envelope cap, and bounded replay duplicate rejection via shared canonical fixtures (`docs/protocol/fixtures/v1`) plus `protocol_service_tests`/`protocol_fixture_contract_tests`. Body-schema integration is now host-tested: a bounded JSON subset parser (depth/node/string limits, int64-only numbers, UTF-8/surrogate/escape validation, duplicate-key/trailing-content rejection) feeds a schema-faithful body validator for schedule alarm records, error responses, and sync receipts with stable `schema_invalid`/`payload_semantic_error` codes and JSON-pointer field paths (`message_body_validator_tests`, `protocol_fixture_cross_language_tests`, and two new invalid fixtures). Authenticated transport/session, fuzzing corpus, and target overload execution remain open |
@@ -60,3 +60,27 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 ## Release-report rule
 
 Reports must list skipped tests and remaining evidence gaps. A requirement is not complete merely because its row exists. Hardware targets remain `not tested` until measurements on an identified assembly are archived.
+
+## Companion bootstrap evidence boundary
+
+The Flutter bootstrap is an offline fake-device model only. Host widget tests
+exercise startup labeling, side-effect-free review, cancel, one explicit
+in-memory apply from revision 1 to 2, a demo-only receipt, reset, and widget-tree
+removal and reconstruction within the same host process. They do not exercise
+process termination, platform relaunch, or a physical device. Reset to initial
+state after a real app restart is implementation intent based on the
+non-persistent controller, not measured evidence.
+The committed Android/iOS projects and CI definitions create future native
+compile gates, but workflow success is not claimed before CI runs.
+
+The Dart demo implements no network operation or runtime permission request.
+Android debug/profile manifests include `INTERNET` for Flutter development
+tooling, and iOS development tooling may use the local network. These
+development compile gates do not prove release permission configuration;
+release manifest and packaged-app permission inspection remain open.
+
+Real pairing, authenticated transport, protocol fixture interoperability,
+device/app storage, calendar/file workflows, actual alarm scheduling or
+execution, screen-reader testing on physical devices, desktop targets, and
+release signing remain open. This slice is not prototype or bench evidence and
+does not close parent issue #6.

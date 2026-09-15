@@ -1,0 +1,87 @@
+name: Companion app
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.2
+
+jobs:
+  app-quality:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Verify pinned SDK
+        run: ./tool/verify_flutter_version.sh
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Require a clean dependency resolution
+        run: git diff --exit-code
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyze app
+        run: flutter analyze
+      - name: Run full widget suite
+        run: flutter test --coverage
+
+  app-android:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Build Android debug APK
+        run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dawn-dock-android-debug
+          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  app-ios:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Compile unsigned iOS simulator app
+        run: flutter build ios --simulator --debug --no-codesign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dawn-dock-ios-simulator-debug
+          path: app/build/ios/iphonesimulator/Runner.app
+          if-no-files-found: error
