@@ -116,13 +116,13 @@ The diagrams are editable Mermaid source. Results must be labeled as static anal
 
 ## Current status and milestones
 
-**Status: requirements, Rev A component selection, schematic, a routed Rev A0 PCB review candidate, and host-tested alarm occurrence, committed-schedule evaluation, weekly recurrence, plus race-safe dual-slot schedule/runtime-journal storage cores exist; fabrication remains blocked.** KiCad 9 ERC/DRC are clean, all nets are routed, and review-only Gerber/drill/render outputs are committed with checksums. The firmware has a pinned ESP-IDF 5.5.5 ESP32-S3 build, host-tested occurrence lifecycle, committed-snapshot UTC evaluation, recurrence, and deterministic recurrence-to-committed-UTC materialization, plus a bounded CRC-protected schedule/journal store with corruption rollback, migration, revision/generation CAS runtime commits, and journal-preserving schedule updates; a pinned IANA data adapter, invalid-time reconciliation, ESP-IDF NVS binding, hardware adapters, protocol, target execution, and bench evidence remain open. Received module/enclosure geometry, two crowded clock return paths, broader plane coverage, assembly rotations, and physical behavior remain open gates. No companion app, enclosure, assembled prototype, or physical test result exists yet. Current, luminance, acoustic, retention, mechanical, EMC/ESD, and thermal claims remain untested.
+**Status: requirements, Rev A component selection, schematic, a routed Rev A0 PCB review candidate, host-tested firmware cores, and a first fake-only Flutter companion bootstrap exist; fabrication and parent companion issue #6 remain open.** The Android/iOS companion scaffold is pinned to Flutter 3.47.2 / Dart 3.13.2 and its widget tests exercise an offline in-memory review, cancel, explicit fake apply, revision receipt, reset, same-process widget reconstruction, and accessibility behavior. They do not exercise an app process restart or device relaunch; reset after a real restart is only the intended result of the non-persistent implementation. The Dart demo implements no pairing, transport, persistence, calendar integration, alarm execution, network behavior, runtime permission request, or protocol conformance. Android debug/profile manifests nevertheless declare `INTERNET` for Flutter development tooling, and iOS development tooling may use the local network. The development build gates do not prove release permission configuration. KiCad and firmware software/static evidence remains as documented in the verification matrix. No enclosure, assembled prototype, or physical test result exists yet; current, luminance, acoustic, retention, mechanical, EMC/ESD, thermal, physical screen-reader, and device usability evidence remain open.
 
 1. **Requirements and risk baseline** — v0.1 architecture, alarm semantics, measurable targets, threat model, risk register, and evidence matrix documented.
 2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
 3. **Editable carrier schematic complete** — native ERC 0 errors/0 warnings, analyzer evidence, critical pin mapping, and KiCad-derived BOM are committed.
 4. Continue the firmware from the tested occurrence and dual-slot storage cores into recurrence/timezone, ESP-IDF NVS integration, and hardware abstractions while Rev A0 fabrication holds remain open.
-5. Build the local-first companion and protocol.
+5. Continue open issue #6 from the fake-only companion bootstrap into reviewed pairing, persistence, calendar, and authenticated protocol integration.
 6. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
 See [PLAN.md](PLAN.md), [hardware/requirements.md](hardware/requirements.md), and the issue backlog.
@@ -139,11 +139,22 @@ python3 scripts/check_component_selection.py
 The hardware validator intentionally requires fresh KiCad-derived inputs; use
 the complete command sequence in [`hardware/kicad/README.md`](hardware/kicad/README.md).
 
-Planned implementation tools:
+Implementation tools:
 
 - KiCad 9 or newer for editable schematic/PCB work and ERC/DRC.
 - ESP-IDF 5.x with CMake/Ninja for firmware.
-- Flutter stable for Android, iOS, Windows, and macOS companion targets.
+- Flutter 3.47.2 with bundled Dart 3.13.2 for the current Android/iOS companion scaffold; Windows/macOS are not enabled yet.
 - Python 3 for protocol fixtures and hardware-independent integration tests.
 
-See [`hardware/kicad/README.md`](hardware/kicad/README.md) for the pinned hardware workflow and [`firmware/README.md`](firmware/README.md) for host tests, the immutable ESP-IDF container build, flash/recovery commands, and explicit firmware evidence gaps. Companion build commands remain future work.
+Run the companion software checks with:
+
+```bash
+cd app
+FLUTTER_BIN=/tmp/flutter-3.47.2/bin/flutter ./tool/verify_flutter_version.sh
+/tmp/flutter-3.47.2/bin/flutter pub get --enforce-lockfile
+/tmp/flutter-3.47.2/bin/dart format --output=none --set-exit-if-changed lib test
+/tmp/flutter-3.47.2/bin/flutter analyze
+/tmp/flutter-3.47.2/bin/flutter test --coverage
+```
+
+See [`app/README.md`](app/README.md) for the offline-demo boundary, mobile workflow, CI build gates, desktop enablement command, and accessibility gaps. See [`hardware/kicad/README.md`](hardware/kicad/README.md) for the pinned hardware workflow and [`firmware/README.md`](firmware/README.md) for host tests, the immutable ESP-IDF container build, flash/recovery commands, and explicit firmware evidence gaps.
