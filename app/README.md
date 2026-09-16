@@ -13,12 +13,40 @@ controller is intentionally non-persistent, so restoring the initial state after
 a real app restart is implementation intent, not measured evidence. The host
 test only removes and reconstructs the widget tree within the same test process.
 
-This bootstrap is not evidence of pairing, transport, protocol conformance,
-device storage, calendar import, backup/export, notifications, or alarm
-execution. Those remain part of open parent issue #6. The architectural and
-privacy boundaries are defined in [system architecture](../docs/system-architecture.md),
-the [threat model](../docs/threat-model.md), and the future
+This bootstrap is not evidence of pairing, transport, device storage, calendar
+import, notifications, or alarm execution. Those remain part of open parent
+issue #6. The architectural and privacy boundaries are defined in
+[system architecture](../docs/system-architecture.md), the
+[threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
+
+## Local domain layer (issue #35)
+
+`lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
+demo UI changed: the domain code is host-tested only and is not yet wired to
+any screen, filesystem, or transport.
+
+- `protocol_contract.dart` mirrors the firmware validator chain
+  (`validate_protocol_envelope` + bounded body validation) in the documented
+  rule order with the stable error codes from `docs/protocol.md`.
+  `test/protocol_contract_test.dart` drives the canonical manifest
+  `docs/protocol/fixtures/v1/manifest.json` read from disk, so the Dart side
+  is checked against the same normative fixtures as firmware, plus targeted
+  gate-specific cases (rule order, replay window, UTF-8 byte bounds, the
+  32-alarm semantic boundary). This is Dart-side self-consistency evidence
+  only — real device interoperability still requires authenticated
+  transport.
+- `device_profile.dart`, `alarm_draft.dart`, and `schedule_store.dart` hold
+  device profiles, editable alarm drafts with bounded import provenance
+  (ics drafts must carry provenance; manual drafts must not), and a
+  revision-tracked in-memory schedule mirror with a sync-receipt mirror. All
+  bounds are enforced at construction; nothing here performs I/O.
+- `backup.dart` exports/restores versioned JSON backups
+  (`dawndock-companion-backup` v1) of the app's own state. Restore is
+  fail-closed: exact key sets, model-bound validation of every entry, and a
+  reserved-key scan that rejects credential-like keys before any state is
+  replaced. Backups currently live only as strings in memory/tests — the
+  file pick and storage wiring are later slices.
 
 ## Toolchain and quickstart
 
