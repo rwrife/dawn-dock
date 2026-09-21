@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issue #35)
+## Local domain layer (issues #35, #39)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
 demo UI changed: the domain code is host-tested only and is not yet wired to
@@ -47,6 +47,15 @@ any screen, filesystem, or transport.
   reserved-key scan that rejects credential-like keys before any state is
   replaced. Backups currently live only as strings in memory/tests — the
   file pick and storage wiring are later slices.
+- `schedule_diff.dart` computes the deterministic, reviewable diff between
+  the committed schedule mirror and a proposed draft set: id-sorted
+  added/removed/changed/unchanged classification with stable field-change
+  codes, an unmodifiable value-equal result, a `summaryText()` review
+  string, and a `toWirePreviewBody()` alarm-array payload matching
+  `AlarmDraft.toWireAlarm()` exactly. Proposals the wire contract would
+  refuse (capacity, duplicate ids) fail closed before any diff work, via
+  the same `DeviceScheduleStore.validateProposal` check. Envelope framing,
+  apply tokens, and revision-conflict UX belong to the transport slice.
 
 ## Toolchain and quickstart
 
