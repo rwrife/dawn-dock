@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39)
+## Local domain layer (issues #35, #39, #41)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
 demo UI changed: the domain code is host-tested only and is not yet wired to
@@ -54,8 +54,26 @@ any screen, filesystem, or transport.
   string, and a `toWirePreviewBody()` alarm-array payload matching
   `AlarmDraft.toWireAlarm()` exactly. Proposals the wire contract would
   refuse (capacity, duplicate ids) fail closed before any diff work, via
-  the same `DeviceScheduleStore.validateProposal` check. Envelope framing,
-  apply tokens, and revision-conflict UX belong to the transport slice.
+  the same `DeviceScheduleStore.validateProposal` check.
+- `schedule_exchange.dart` frames the `schedule.preview` / `schedule.apply`
+  exchange around that diff. `ScheduleExchange.beginPreview` arms a proposal
+  only when its expected revision equals the local mirror, and
+  `buildPreview`/`buildApply` produce request envelopes that pass the
+  mirrored `validateContractMessage` gate and are byte-equal to the canonical
+  fixtures `valid/schedule_preview.request.json` and
+  `valid/schedule_apply.request.json` (verified by
+  `test/schedule_exchange_test.dart`). A device-issued apply token is bound
+  to the exact previewed content digest and revision; malformed tokens,
+  content drift, or mirror movement past the armed revision refuse the apply
+  without sending. `ingest` runs inbound `event.syncReceipt` /
+  `error.response` messages through the contract gate with a bounded replay
+  window first: a receipt is adopted only when it advances exactly one
+  revision with a matching alarm count (everything else leaves the store
+  untouched), a `revision_conflict` moves the exchange to a refresh-required
+  state that discards the token, and `rebase` refuses until an independent
+  sync refreshes the mirror to the device-reported revision. This is
+  host-side framing evidence only: the real transport, device-side token
+  issuance, and UI wiring remain open.
 
 ## Toolchain and quickstart
 
