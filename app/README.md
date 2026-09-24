@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41)
+## Local domain layer (issues #35, #39, #41, #43)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
 demo UI changed: the domain code is host-tested only and is not yet wired to
@@ -74,6 +74,23 @@ any screen, filesystem, or transport.
   sync refreshes the mirror to the device-reported revision. This is
   host-side framing evidence only: the real transport, device-side token
   issuance, and UI wiring remain open.
+- `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
+  weekly recurrence resolver (`firmware/components/alarm_core/`), including
+  its int64 overflow guards and 14-day bounded search. It resolves the next
+  occurrence for a caller-supplied UTC-offset rule chain: spring-gap times
+  shift once to the earliest valid local instant on the same calendar date
+  (`shiftedForGap`), ambiguous fold instants resolve to the FIRST UTC
+  occurrence only (`ambiguousFold`), and malformed schedules, mismatched
+  rule-set provenance, broken transition chains, and unrepresentable
+  instants fail closed with typed statuses.
+  `test/recurrence_test.dart` asserts the identical instants, offsets,
+  local dates, and gap/fold flags as every expectation in
+  `firmware/host/tests/recurrence_resolver_test.cpp` (New York and Berlin
+  gap/fold, Apia's fully deleted Friday, Tokyo local-weekday selection,
+  UTC year rollover, second-fold-never-selected, and the overflow
+  fail-closed cases). This is static policy-mirror evidence: the app never
+  queries a platform timezone database, on-device rule-data embedding, and
+  app/device output interoperability over a session remain open.
 
 ## Toolchain and quickstart
 
