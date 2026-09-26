@@ -17,12 +17,12 @@
 /// * Rate limiting (attempt/window closure) never blocks anything outside
 ///   this domain object — there is no physical-control code here to delay,
 ///   consistent with TM-07 "lockout applies only to pairing".
-/// * A completed ceremony yields a [PairedDeviceRecord] carrying only an
-///   opaque, caller-supplied secure-storage reference token. The record
-///   structurally has no field that could carry a raw secret, matching
-///   TM-08/TM-14: nothing that looks like a credential exists to redact
-///   because it was never modeled. [PairedDeviceRecord.toDiagnosticMap] is
-///   the only serialization and it never includes the confirmation code or
+/// * A completed ceremony yields a [PairedDeviceRecord] carrying a
+///   caller-supplied secure-storage reference token. This domain layer does
+///   not validate that token's semantics — callers must provide only
+///   non-secret references (for example key aliases), never raw credential
+///   material. [PairedDeviceRecord.toDiagnosticMap] is the only
+///   serialization and it never includes the token, confirmation code, or
 ///   fingerprint.
 ///
 /// This is domain policy only: no Bluetooth/LAN sockets, no mDNS, no
@@ -259,8 +259,12 @@ class PairingCeremony {
   int remainingWindowSeconds() {
     final now = _clock().toUtc();
     final remaining = windowDeadline.difference(now).inSeconds;
-    return remaining < 0 ? 0 : remaining;
+    if (remaining < 0) return 0;
+    if (remaining > _windowSeconds) return _windowSeconds;
+    return remaining;
   }
+
+  bool _hasStartedAt(DateTime now) => !now.isBefore(_windowStart);
 
   bool _isExpiredAt(DateTime now) => !now.isBefore(windowDeadline);
 
@@ -303,9 +307,18 @@ class PairingCeremony {
       );
     }
     final now = _clock().toUtc();
+    if (!_hasStartedAt(now)) {
+      // Fail closed before the device window opens: consume no attempt and
+      // keep the ceremony open so a premature caller cannot pre-confirm.
+      throw StateError(
+        'pairing window has not opened yet; confirmation is not accepted',
+      );
+    }
     if (_isExpiredAt(now)) {
       _closureReason = PairingClosureReason.timedOut;
-      throw StateError('pairing window elapsed before this attempt was made');
+      throw StateError(
+        'pairing window elapsed before this attempt was made',
+      );
     }
 
     _attempts += 1;
