@@ -428,11 +428,13 @@ class PairedDeviceRecord {
 
   final DateTime pairedAtUtc;
 
-  /// Projection for logs/diagnostics/export: identity, display name, and
-  /// pairing time only. [secureStorageReference] is intentionally excluded
-  /// because it is a pointer to credential material with no purpose outside
-  /// platform storage APIs — excluding it also protects the case where a
-  /// caller misused the field to carry a raw secret.
+  /// Projection for controlled logs/diagnostics/export: identity, display
+  /// name, and pairing time only. [secureStorageReference] is intentionally
+  /// excluded because it is a pointer to credential material with no purpose
+  /// outside platform storage APIs — excluding it also protects the case
+  /// where a caller misused the field to carry a raw secret. Identity and
+  /// display name remain caller-controlled; consumers must apply their own
+  /// logging/privacy policy before emitting this map.
   Map<String, Object?> toDiagnosticMap() => {
     'identity': identity,
     'displayName': displayName,
