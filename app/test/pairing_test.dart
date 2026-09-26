@@ -269,36 +269,39 @@ void main() {
         expect(ceremony.isClosed, isFalse);
       });
 
-      test('attempt before window start throws and does not consume attempts', () {
-        var currentClock = baseStart.subtract(const Duration(seconds: 1));
-        final ceremony = PairingCeremony(
-          candidate: manualCandidate(),
-          expectedShortCode: '482910',
-          expectedFingerprint: 'A1:B2:C3:D4:E5:F6:07:18',
-          windowStart: baseStart,
-          windowSeconds: 120,
-          clock: () => currentClock,
-        );
+      test(
+        'attempt before window start throws and does not consume attempts',
+        () {
+          var currentClock = baseStart.subtract(const Duration(seconds: 1));
+          final ceremony = PairingCeremony(
+            candidate: manualCandidate(),
+            expectedShortCode: '482910',
+            expectedFingerprint: 'A1:B2:C3:D4:E5:F6:07:18',
+            windowStart: baseStart,
+            windowSeconds: 120,
+            clock: () => currentClock,
+          );
 
-        expect(
-          () => ceremony.attemptConfirmation(
+          expect(
+            () => ceremony.attemptConfirmation(
+              shortCode: '482910',
+              fingerprint: 'A1:B2:C3:D4:E5:F6:07:18',
+            ),
+            throwsStateError,
+          );
+          expect(ceremony.attemptCount, 0);
+          expect(ceremony.isClosed, isFalse);
+
+          currentClock = baseStart;
+          final result = ceremony.attemptConfirmation(
             shortCode: '482910',
             fingerprint: 'A1:B2:C3:D4:E5:F6:07:18',
-          ),
-          throwsStateError,
-        );
-        expect(ceremony.attemptCount, 0);
-        expect(ceremony.isClosed, isFalse);
-
-        currentClock = baseStart;
-        final result = ceremony.attemptConfirmation(
-          shortCode: '482910',
-          fingerprint: 'A1:B2:C3:D4:E5:F6:07:18',
-        );
-        expect(result.accepted, isTrue);
-        expect(result.attemptNumber, 1);
-        expect(ceremony.closureReason, PairingClosureReason.confirmed);
-      });
+          );
+          expect(result.accepted, isTrue);
+          expect(result.attemptNumber, 1);
+          expect(ceremony.closureReason, PairingClosureReason.confirmed);
+        },
+      );
 
       test('reaches 5-attempt closure (attemptsExhausted) on 5th failed confirmation', () {
         final ceremony = openCeremony(

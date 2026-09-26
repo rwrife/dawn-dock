@@ -316,9 +316,7 @@ class PairingCeremony {
     }
     if (_isExpiredAt(now)) {
       _closureReason = PairingClosureReason.timedOut;
-      throw StateError(
-        'pairing window elapsed before this attempt was made',
-      );
+      throw StateError('pairing window elapsed before this attempt was made');
     }
 
     _attempts += 1;
