@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
 demo UI changed: the domain code is host-tested only and is not yet wired to
@@ -91,6 +91,31 @@ any screen, filesystem, or transport.
   fail-closed cases). This is static policy-mirror evidence: the app never
   queries a platform timezone database, on-device rule-data embedding, and
   app/device output interoperability over a session remain open.
+- `device_status.dart` projects a deterministic next-alarm/status summary
+  over the committed schedule mirror and caller-supplied timezone rules.
+  It fails closed when any enabled alarm cannot be resolved, tie-breaks equal
+  UTC instants by alarm ID, and classifies evidence as local-only, current-
+  revision receipt-confirmed, or receipt-mismatch. `test/device_status_test.dart`
+  covers empty/disabled schedules, gap/fold metadata, unresolved fail-closed
+  behavior, and receipt-evidence transitions. This is host-only model evidence:
+  there is no live transport, runtime clock source integration, target alarm
+  execution, or endurance proof.
+- `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
+  bounded discovery/manual-address candidates, a ceremony that is closed by
+  default and only valid inside a caller-reported device pairing window
+  (max 120 seconds), exact short-code + fingerprint confirmation, 5-attempt
+  lockout closure, explicit cancel/timeout states, and paired-device records
+  that carry a caller-supplied secure-storage reference token omitted from
+  diagnostic output. `test/pairing_test.dart` verifies happy path, timeout
+  edge, lockout boundary, mismatch handling, one-shot completion behavior,
+  pre-window rejection, and diagnostic redaction. This object is not a
+  security boundary: attempt limits reset if a caller constructs a new
+  ceremony, window timing follows the injected wall clock, and the string
+  reference cannot prove it is an alias rather than credential material.
+  Authoritative monotonic timing/rate limiting, alias enforcement,
+  cryptographic key exchange, Keychain/Keystore plugin integration, LAN/BLE
+  transport, firmware/device interoperability, and physical timing remain
+  open.
 
 ## Toolchain and quickstart
 
