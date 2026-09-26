@@ -419,16 +419,20 @@ class PairedDeviceRecord {
   final String identity;
   final String displayName;
 
-  /// Opaque pointer into platform secure storage (e.g. a Keychain/Keystore
-  /// key alias). Never the secret itself.
+  /// Pointer into platform secure storage, intended to be only an
+  /// alias/handle (e.g. a Keychain/Keystore key name). This class cannot
+  /// verify that: the constructor accepts any bounded string, so a caller
+  /// could pass raw credential material here. Storage adapters must enforce
+  /// alias semantics before constructing this record.
   final String secureStorageReference;
 
   final DateTime pairedAtUtc;
 
-  /// Safe-to-export/-log projection: identity, display name, and pairing
-  /// time only. [secureStorageReference] is intentionally excluded even
-  /// though it is not itself a secret, because it is a pointer to one and
-  /// has no purpose outside platform storage APIs.
+  /// Projection for logs/diagnostics/export: identity, display name, and
+  /// pairing time only. [secureStorageReference] is intentionally excluded
+  /// because it is a pointer to credential material with no purpose outside
+  /// platform storage APIs — excluding it also protects the case where a
+  /// caller misused the field to carry a raw secret.
   Map<String, Object?> toDiagnosticMap() => {
     'identity': identity,
     'displayName': displayName,
