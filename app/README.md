@@ -105,13 +105,17 @@ any screen, filesystem, or transport.
   default and only valid inside a caller-reported device pairing window
   (max 120 seconds), exact short-code + fingerprint confirmation, 5-attempt
   lockout closure, explicit cancel/timeout states, and paired-device records
-  that carry only an opaque secure-storage reference token (never raw
-  credentials). `test/pairing_test.dart` verifies happy path, timeout edge,
-  lockout boundary, mismatch handling, one-shot completion behavior, and
-  diagnostic redaction. This is software-only policy evidence — no
-  cryptographic key exchange, Keychain/Keystore plugin integration,
-  LAN/BLE transport, firmware/device interoperability, or physical pairing
-  timing claim.
+  that carry a caller-supplied secure-storage reference token omitted from
+  diagnostic output. `test/pairing_test.dart` verifies happy path, timeout
+  edge, lockout boundary, mismatch handling, one-shot completion behavior,
+  pre-window rejection, and diagnostic redaction. This object is not a
+  security boundary: attempt limits reset if a caller constructs a new
+  ceremony, window timing follows the injected wall clock, and the string
+  reference cannot prove it is an alias rather than credential material.
+  Authoritative monotonic timing/rate limiting, alias enforcement,
+  cryptographic key exchange, Keychain/Keystore plugin integration, LAN/BLE
+  transport, firmware/device interoperability, and physical timing remain
+  open.
 
 ## Toolchain and quickstart
 

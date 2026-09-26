@@ -16,7 +16,13 @@
 ///   the timeout closure so lockout and expiry are exposed identically.
 /// * Rate limiting (attempt/window closure) never blocks anything outside
 ///   this domain object — there is no physical-control code here to delay,
-///   consistent with TM-07 "lockout applies only to pairing".
+///   consistent with TM-07 "lockout applies only to pairing". Enforcement
+///   is per-ceremony-object: a caller that constructs a fresh ceremony
+///   resets the count, and window checks follow the injected clock, so a
+///   backward system-clock change can extend a window. Authoritative
+///   attempt counting and monotonic window timing are device/session
+///   responsibilities and remain open (see CONN-02 in the verification
+///   matrix).
 /// * A completed ceremony yields a [PairedDeviceRecord] carrying a
 ///   caller-supplied secure-storage reference token. This domain layer does
 ///   not validate that token's semantics — callers must provide only
@@ -385,10 +391,15 @@ class PairingCeremony {
 
 /// The durable result of a completed pairing ceremony: a device identity
 /// plus a reference to wherever the real credential material lives on the
-/// platform. There is deliberately no field, constructor parameter, or
-/// accessor here that could hold a raw secret — TM-08 ("Credential appears
-/// in log/backup") and TM-14 ("Secret/calendar data remains after erase")
-/// are addressed structurally, not by redaction after the fact.
+/// platform.
+///
+/// Important boundary: [secureStorageReference] is just a bounded string in
+/// this pure domain model. It is intended to be an alias/handle (for example
+/// a Keychain/Keystore key name), but this class cannot prove that at runtime.
+/// Adapters that bridge to platform storage must enforce alias semantics and
+/// must never pass raw credentials here. TM-08/TM-14 risk reduction in this
+/// slice comes from two properties: diagnostics/export omit this field, and no
+/// dedicated credential fields are modeled.
 class PairedDeviceRecord {
   PairedDeviceRecord({
     required this.identity,
