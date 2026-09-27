@@ -100,6 +100,19 @@ any screen, filesystem, or transport.
   behavior, and receipt-evidence transitions. This is host-only model evidence:
   there is no live transport, runtime clock source integration, target alarm
   execution, or endurance proof.
+- `local_backup_store.dart` adds host-testable local file persistence for
+  issue #49: `CompanionBackup` text is written atomically (temp file, then
+  rename) to a caller-supplied directory, `load()` returns `null` for a
+  missing file and never throws for absence, `loadText()`/`load()` reject
+  oversized or corrupt content with a typed `BackupException` without
+  touching prior state, and `erase()` removes the file if present and is a
+  no-op otherwise. `test/local_backup_store_test.dart` covers the round
+  trip, overwrite-replaces-prior-content, erase idempotency, pre-write
+  oversize rejection, and corrupt-file load rejection, all against host
+  temp directories created and torn down per test. Directory selection is
+  entirely caller-supplied: no `path_provider` or platform storage plugin
+  is wired here, there is no UI export/import wiring yet, and real-device
+  storage/erase evidence remains open.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
