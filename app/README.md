@@ -113,6 +113,18 @@ any screen, filesystem, or transport.
   entirely caller-supplied: no `path_provider` or platform storage plugin
   is wired here, there is no UI export/import wiring yet, and real-device
   storage/erase evidence remains open.
+- `backup_coordinator.dart` sequences export, inspect, restore, and erase
+  across live stores and `LocalBackupStore` for issue #51. Export
+  snapshots current store state to disk and returns an immutable
+  `BackupSummary`. Inspect summarizes saved content without touching live
+  stores. Restore applies validated backup contents to all live stores
+  and rejects stale revisions (`backup.knownRevision < schedule.knownRevision`)
+  unless `allowStale: true` is explicitly provided. `test/backup_coordinator_test.dart`
+  verifies export snapshot consistency, inspect isolation, missing file
+  handling, complete store restore, stale rejection/override, corrupt
+  file fail-closed behavior, direct in-memory restore (`restoreBackup`), and
+  erase idempotency. Screen integration, user file picking, platform
+  directory selection, and target execution remain open.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
