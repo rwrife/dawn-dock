@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
 demo UI changed: the domain code is host-tested only and is not yet wired to
@@ -123,8 +123,19 @@ any screen, filesystem, or transport.
   verifies export snapshot consistency, inspect isolation, missing file
   handling, complete store restore, stale rejection/override, corrupt
   file fail-closed behavior, direct in-memory restore (`restoreBackup`), and
-  erase idempotency. Screen integration, user file picking, platform
-  directory selection, and target execution remain open.
+  erase idempotency.
+- `backup_flow_controller.dart` adds issue #53's host-tested presentation
+  state machine over `BackupCoordinator` without adding UI or plugin
+  dependencies. It serializes backup actions (export/inspect/restore/erase),
+  reports distinct idle/busy/absent/success/failure states, and models stale
+  revision refusal as an explicit `BackupStaleConfirmationRequired` state so
+  a caller must opt in through `confirmStaleRestore()` before retrying with
+  `allowStale: true`. `test/backup_flow_controller_test.dart` covers overlap
+  rejection while busy, missing-versus-corrupt backup distinction, stale
+  refusal/confirm/cancel paths, export summary state, and idempotent erase.
+  This remains host-domain evidence only: no Flutter widget consumes these
+  states yet, no file picker/share flow is wired, directory selection remains
+  caller-provided, and no target-device execution evidence exists.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
