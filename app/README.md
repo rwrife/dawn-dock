@@ -20,11 +20,13 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53) and backup panel widget (issue #55)
 
-`lib/domain/` adds pure-Dart building blocks behind the demo. Nothing in the
-demo UI changed: the domain code is host-tested only and is not yet wired to
-any screen, filesystem, or transport.
+`lib/domain/` adds pure-Dart building blocks behind the demo, and
+`lib/ui/backup_flow_panel.dart` is the first host-tested widget that renders
+one of those layers. Nothing in the demo UI changed: the domain code and the
+panel are host-tested only and are not mounted in any app screen, filesystem
+directory choice, or transport.
 
 - `protocol_contract.dart` mirrors the firmware validator chain
   (`validate_protocol_envelope` + bounded body validation) in the documented
@@ -133,9 +135,26 @@ any screen, filesystem, or transport.
   `allowStale: true`. `test/backup_flow_controller_test.dart` covers overlap
   rejection while busy, missing-versus-corrupt backup distinction, stale
   refusal/confirm/cancel paths, export summary state, and idempotent erase.
-  This remains host-domain evidence only: no Flutter widget consumes these
-  states yet, no file picker/share flow is wired, directory selection remains
-  caller-provided, and no target-device execution evidence exists.
+  This remains host-domain evidence only: no file picker/share flow is wired,
+  directory selection remains caller-provided, and no target-device execution
+  evidence exists.
+- `ui/backup_flow_panel.dart` (issue #55) is the first host-tested widget
+  over that controller: it renders every `BackupFlowState` as explicit
+  text-only status (live-region semantics, never color alone), disables all
+  four actions (Export/Check/Restore/Erase) while the controller is busy,
+  and exposes stale-restore resolution only through the controller's
+  explicit `confirmStaleRestore()`/`cancelStaleConfirmation()` calls — the
+  widget never applies `allowStale` itself. `test/backup_flow_panel_test.dart`
+  drives the flow against an in-memory `LocalBackupStore` double and covers
+  initial labeling, export summary rendering, absent-versus-corrupt status
+  text, erase idempotency, disabled-while-busy gating with a gated store,
+  stale restore refusal → explicit confirm applies / cancel preserves live
+  stores, semantic live-region labels, 48-logical-pixel control minimums,
+  and 320-logical-pixel 200%-text rendering without overflow. This is host
+  widget evidence only: the panel is not mounted in any app screen or
+  navigation, uses an in-memory store double rather than a real filesystem
+  path, and there is no file picker, platform storage, target-device, or
+  physical screen-reader evidence.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
