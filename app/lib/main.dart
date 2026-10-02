@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'demo_controller.dart';
+import 'ui/backup_demo_page.dart';
 
 void main() => runApp(const MyApp());
 
@@ -164,6 +167,22 @@ class _DemoHomePageState extends State<DemoHomePage> {
                               icon: const Icon(Icons.rate_review_outlined),
                               label: const Text('Review sample change'),
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('backup-demo'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => BackupDemoPage(
+                            backupDirectory: Directory.systemTemp,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.folder_copy_outlined),
+                      label: const Text('Open backup demo'),
                     ),
                   ),
                 ],
