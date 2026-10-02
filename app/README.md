@@ -20,13 +20,15 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53) and backup panel widget (issue #55)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53), backup panel widget (issue #55), and backup demo page (issue #57)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo, and
 `lib/ui/backup_flow_panel.dart` is the first host-tested widget that renders
-one of those layers. Nothing in the demo UI changed: the domain code and the
-panel are host-tested only and are not mounted in any app screen, filesystem
-directory choice, or transport.
+one of those layers. The domain layer itself remains host-tested only and is
+not wired to any transport; `lib/ui/backup_demo_page.dart` (issue #57) is now
+mounted behind an "Open backup demo" entry on the demo home and is the first
+place where a domain flow runs against a real filesystem directory (the OS
+temporary directory, explicitly labeled as demo-scoped on screen).
 
 - `protocol_contract.dart` mirrors the firmware validator chain
   (`validate_protocol_envelope` + bounded body validation) in the documented
@@ -151,10 +153,24 @@ directory choice, or transport.
   stale restore refusal → explicit confirm applies / cancel preserves live
   stores, semantic live-region labels, 48-logical-pixel control minimums,
   and 320-logical-pixel 200%-text rendering without overflow. This is host
-  widget evidence only: the panel is not mounted in any app screen or
-  navigation, uses an in-memory store double rather than a real filesystem
-  path, and there is no file picker, platform storage, target-device, or
-  physical screen-reader evidence.
+  widget evidence only: its own tests use an in-memory store double, not a
+  real filesystem path.
+- `ui/backup_demo_page.dart` + `test/backup_demo_page_test.dart` (issue #57)
+  mount that panel in the app for the first time: the demo home gained an
+  "Open backup demo" entry that pushes a page hosting `BackupFlowPanel` over
+  a real `LocalBackupStore` in a caller-injected directory (the demo passes
+  the OS temporary directory). The tests assert real on-disk effects —
+  export creates `companion-backup-v1.json` with the expected format marker
+  and revision, check distinguishes absent from a saved summary, erase
+  deletes the file, restore reads the on-disk backup, and a same-process
+  widget reconstruction discovers the saved file. The page states its
+  limits on screen: temporary-directory storage is not private, not
+  encrypted, and not guaranteed to survive cleanup or reinstall, and the
+  page's profile/draft/schedule state is in-memory demo state. This remains
+  host filesystem/widget evidence only: the remount test is widget
+  reconstruction, not an app process restart, and there is still no
+  path_provider platform storage, file picker, share sheet, encryption,
+  target-device, or physical screen-reader evidence.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
