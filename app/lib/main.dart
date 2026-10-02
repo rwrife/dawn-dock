@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'demo_controller.dart';
 import 'ui/backup_demo_page.dart';
+import 'ui/schedule_review_demo_page.dart';
 
 void main() => runApp(const MyApp());
 
@@ -183,6 +184,20 @@ class _DemoHomePageState extends State<DemoHomePage> {
                       ),
                       icon: const Icon(Icons.folder_copy_outlined),
                       label: const Text('Open backup demo'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('schedule-review-demo'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const ScheduleReviewDemoPage(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.rate_review_outlined),
+                      label: const Text('Open schedule review demo'),
                     ),
                   ),
                 ],

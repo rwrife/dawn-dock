@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53), backup panel widget (issue #55), and backup demo page (issue #57)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53), backup panel widget (issue #55), backup demo page (issue #57), and schedule review panel + demo page (issue #59)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo, and
 `lib/ui/backup_flow_panel.dart` is the first host-tested widget that renders
@@ -171,6 +171,30 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   reconstruction, not an app process restart, and there is still no
   path_provider platform storage, file picker, share sheet, encryption,
   target-device, or physical screen-reader evidence.
+- `ui/schedule_review_panel.dart` + `ui/schedule_review_demo_page.dart`
+  (issue #59) render the deterministic `diffSchedule` result as an
+  accessible review: text-only live-region status (counts plus expected
+  revision, never color alone) with one explicit line per changed (`~`,
+  stable field-change codes), added (`+`), and removed (`-`) alarm that
+  matches `ScheduleDiff.summaryText` wording line-for-line, and a single
+  confirm action that emits exactly the locally computed `ScheduleDiff`
+  through an injected callback. A proposal the wire contract would refuse
+  (duplicate ids or over-capacity — the same `DeviceScheduleStore` bounds)
+  surfaces as an explicit refusal status with confirm disabled; the panel
+  never mutates a store, sends a preview, or validates a device token.
+  `test/schedule_review_panel_test.dart` covers status wording, per-line
+  rendering pinned to the domain `summaryText`, multi-field change codes,
+  truthful empty-diff confirmation, refusal gating (disabled confirm is a
+  no-op even when tapped), live-region semantics, 48-logical-pixel targets,
+  and 320-logical-pixel 200%-text rendering. `test/schedule_review_demo_page_test.dart`
+  mounts it behind an "Open schedule review demo" home entry over a seeded
+  in-memory baseline (revision 3) and toggled proposal, asserting the review
+  recomputes on proposal change, confirm records locally only with the
+  baseline mirror unchanged, and a same-process widget reconstruction
+  returns fresh state. This is host widget evidence only: no `schedule.preview`/
+  `schedule.apply` envelope is ever sent, no device apply token exists or is
+  validated, and no transport, revision-conflict, or physical screen-reader
+  evidence exists.
 - `pairing.dart` adds a pure-Dart pairing-domain policy core for issue #47:
   bounded discovery/manual-address candidates, a ceremony that is closed by
   default and only valid inside a caller-reported device pairing window
