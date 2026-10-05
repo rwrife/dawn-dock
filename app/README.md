@@ -104,6 +104,15 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   behavior, and receipt-evidence transitions. This is host-only model evidence:
   there is no live transport, runtime clock source integration, target alarm
   execution, or endurance proof.
+- `ui/device_status_panel.dart` renders the projection with explicit text
+  distinguishing local-only, stored-receipt match, receipt mismatch, withheld
+  unresolved alarms, and empty schedules; it also labels gap/fold decisions.
+  The home entry "Open local status demo" mounts it over seeded in-memory
+  UTC rules and a fixed 2026-01-01 anchor. Receipt examples are synthetic,
+  not live status. Widget tests cover the evidence classes, fail-closed
+  withheld-next behavior, live-region semantics, and narrow large-text
+  navigation. No transport, platform clock/rule source, or device execution
+  is involved; receipt agreement at an old anchor is not live confirmation.
 - `local_backup_store.dart` adds host-testable local file persistence for
   issue #49: `CompanionBackup` text is written atomically (temp file, then
   rename) to a caller-supplied directory, `load()` returns `null` for a
