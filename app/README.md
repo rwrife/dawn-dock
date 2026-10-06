@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53), backup panel widget (issue #55), backup demo page (issue #57), and schedule review panel + demo page (issue #59)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53, #63), backup panel widget (issue #55), backup demo page (issue #57), and schedule review panel + demo page (issue #59)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo, and
 `lib/ui/backup_flow_panel.dart` is the first host-tested widget that renders
@@ -78,6 +78,17 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   sync refreshes the mirror to the device-reported revision. This is
   host-side framing evidence only: the real transport, device-side token
   issuance, and UI wiring remain open.
+- `schedule_flow_controller.dart` (issue #63) is a pure-Dart presentation
+  policy over that exchange. It requires a separate review, preview framing,
+  caller-supplied token, and explicit apply confirmation before a supplied
+  receipt can advance the local mirror. It exposes text-only pending,
+  refused, and conflict/refresh states. A framed apply is *outcome unknown*,
+  never a success or cancelable device rollback; conflict refresh requires
+  an independently refreshed mirror and a new review. Host tests cover
+  refusal, replay, mirror movement, and no implicit retry. This controller
+  neither sends requests nor authenticates/correlates inbound messages or
+  tokens. Replay tracking is per exchange, not a session security boundary;
+  there is no transport, screen, device execution, or physical evidence.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next

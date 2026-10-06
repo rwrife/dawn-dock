@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested schedule-exchange presentation controller, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
 
 ## Evidence classes
 
@@ -56,6 +56,21 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+
+## CONN-03 schedule-flow controller evidence (issue #63)
+
+`app/lib/domain/schedule_flow_controller.dart` adds host-tested presentation
+policy over the existing exchange: explicit review, preview framing, supplied
+token, explicit apply confirmation, and consistent supplied receipt adoption.
+Pending apply is outcome-unknown, not cancelable device rollback. Conflict
+refresh requires the exact reported revision in an independently refreshed
+mirror and a new review/preview. Invalid proposals and duplicate actions fail
+closed; malformed or inconsistent receipts leave the mirror untouched.
+`app/test/schedule_flow_controller_test.dart` exercises these policies.
+No UI mount, authenticated transport, receipt/token authenticity or correlation,
+session-wide replay boundary, target runtime, or physical evidence is supplied.
+The adapters must enforce those remaining responsibilities; per-exchange replay
+tracking resets on a fresh review. Parent #6 remains open.
 
 ## Release-report rule
 
