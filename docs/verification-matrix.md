@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested schedule-exchange presentation controller, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested schedule-exchange presentation controller and accessible unmounted flow panel, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
 
 ## Evidence classes
 
@@ -72,6 +72,26 @@ session-wide replay boundary, target runtime, or physical evidence is supplied.
 The adapters must enforce those remaining responsibilities; per-exchange replay
 tracking resets on a fresh review. Parent #6 remains open.
 
+## CONN-03 schedule-flow panel evidence (issue #65)
+
+`app/lib/ui/schedule_flow_panel.dart` renders a `ScheduleFlowState` snapshot
+as text-only live-region status plus review/preview/apply/cancel/refresh
+actions enabled only when the controller gate for that transition is open.
+Widget tests (`app/test/schedule_flow_panel_test.dart`) drive a real
+controller through a host harness and pin: gated idle actions, review status
+with the domain `summaryText()`, framed-preview pending without mirror
+adoption, explicit confirmation as the only apply path, pending apply with
+cancel/re-confirm disabled and the outcome-unknown notice, consistent
+supplied-receipt adoption, refused proposals with the stable reason code,
+revision-conflict refresh accepted only at the exact reported revision
+(wrong/absent revision stays needsRefresh), cancel, live-region semantics
+parity, and 320px/200%-text layout. The panel performs no I/O, never
+synthesizes a token or receipt, and cannot authenticate either; framed
+requests are not delivery evidence and adopted receipts are not device
+confirmation. It is not yet mounted in app navigation. Host widget-test
+evidence only: no transport, target execution, platform screen reader, or
+physical evidence. Parent #6 remains open.
+
 ## Release-report rule
 
 Reports must list skipped tests and remaining evidence gaps. A requirement is not complete merely because its row exists. Hardware targets remain `not tested` until measurements on an identified assembly are archived.
@@ -106,12 +126,19 @@ schedule preview/apply exchange framing core, the device-status/next-alarm
 projection core, and the pairing ceremony/candidate/paired-record domain core)
 is software-only evidence: the code is not wired to any
 screen, filesystem, or transport, its tests run on the host Dart VM, and none
-of the open items above change because it exists. Two exceptions exist in
+of the open items above change because it exists. Several widgets exist in
 `lib/ui/`: the host-tested `backup_flow_panel.dart` widget, whose widget
-tests render the backup-flow controller over an in-memory store double, and
+tests render the backup-flow controller over an in-memory store double;
 the host-tested `backup_demo_page.dart`, which mounts that panel behind the
 demo home's "Open backup demo" entry over a real `LocalBackupStore` in a
-caller-injected directory (the demo uses the OS temporary directory). The
+caller-injected directory (the demo uses the OS temporary directory);
+the host-tested `schedule_review_panel.dart` and `device_status_panel.dart`
+widgets and their demo pages; and the host-tested `schedule_flow_panel.dart`
+widget (issue #65), which renders the schedule-flow presentation controller's
+explicit review, preview, confirmation, pending, refusal, and conflict states
+with live-region status and 48px action gates. It performs no network I/O,
+synthesizes no receipt or token, cannot prove device outcome or authentication,
+and is not yet mounted in app navigation. The
 demo-page tests assert real file creation, discovery, and deletion, but they
 prove nothing about platform storage plugins, file pickers, encryption, an
 app process restart, target-device execution, or physical assistive
