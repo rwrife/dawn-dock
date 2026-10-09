@@ -20,7 +20,7 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53, #63), backup panel widget (issue #55), backup demo page (issue #57), and schedule review panel + demo page (issue #59)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53, #63), backup panel widget (issue #55), backup demo page (issue #57), and schedule review panel + demo page (issue #59), schedule flow panel widget (issue #65)
 
 `lib/domain/` adds pure-Dart building blocks behind the demo, and
 `lib/ui/backup_flow_panel.dart` is the first host-tested widget that renders
@@ -89,6 +89,16 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   neither sends requests nor authenticates/correlates inbound messages or
   tokens. Replay tracking is per exchange, not a session security boundary;
   there is no transport, screen, device execution, or physical evidence.
+- `ui/schedule_flow_panel.dart` (issue #65) is an unmounted, host-tested
+  widget that renders those controller states with text-only live-region
+  status and enabled-only-when-allowed review, preview, explicit apply,
+  cancel, and refresh-check actions. A host harness supplies the controller,
+  proposal, message identity, and test fixtures; the panel itself never
+  supplies a token, receipt, device connection, or independently refreshed
+  schedule. Widget tests cover refusal, conflict, pending outcome unknown,
+  confirmation, and narrow 200% text. A framed request is not delivered,
+  and a supplied receipt is not authenticated. App navigation, transport,
+  platform screen reader, target execution, and physical testing remain open.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next
