@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'demo_controller.dart';
 import 'ui/backup_demo_page.dart';
 import 'ui/device_status_demo_page.dart';
+import 'ui/schedule_flow_demo_page.dart';
 import 'ui/schedule_review_demo_page.dart';
 
 void main() => runApp(const MyApp());
@@ -213,6 +214,20 @@ class _DemoHomePageState extends State<DemoHomePage> {
                       ),
                       icon: const Icon(Icons.alarm_outlined),
                       label: const Text('Open local status demo'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('schedule-flow-demo'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const ScheduleFlowDemoPage(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.sync_outlined),
+                      label: const Text('Open schedule flow demo'),
                     ),
                   ),
                 ],

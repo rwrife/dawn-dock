@@ -1,7 +1,7 @@
 # Requirements verification matrix
 
 **Baseline:** v0.1
-**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested schedule-exchange presentation controller and accessible unmounted flow panel, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
+**Current project evidence:** documentation; static KiCad schematic/PCB/ERC/DRC/BOM review; partial alarm-core, committed-schedule evaluator, dual-slot storage, supplied-rule weekly recurrence, protocol envelope + bounded body-schema host tests plus ESP32-S3 cross-build; Flutter fake-device widget software tests plus a host-tested pure-Dart protocol-fixture contract mirror, local domain/backup models, a host-tested local backup flow coordinator, a host-tested backup-flow presentation state controller rendered first over an in-memory store double and now mounted in a host-tested demo backup page over a real caller-injected temp-directory file store, a host-tested deterministic schedule-diff core, a host-tested schedule-exchange presentation controller and accessible flow panel now mounted in a local-only in-memory demo route that frames but never delivers a preview, a host-tested pure-Dart mirror of the supplied-rule weekly recurrence resolver, a host-tested device-status/next-alarm projection core, a host-tested pairing ceremony/candidate domain core, and a host-tested accessible schedule-review panel plus demo page that render the schedule diff locally without ever sending a preview; a host-tested local-only status panel/demo over a fixed fixture anchor with text-only receipt/unresolved evidence; no companion target execution or physical test evidence
 
 ## Evidence classes
 
@@ -88,9 +88,28 @@ revision-conflict refresh accepted only at the exact reported revision
 parity, and 320px/200%-text layout. The panel performs no I/O, never
 synthesizes a token or receipt, and cannot authenticate either; framed
 requests are not delivery evidence and adopted receipts are not device
-confirmation. It is not yet mounted in app navigation. Host widget-test
+confirmation. It was not mounted in app navigation at the time of issue #65
+(see the issue #67 section below for the later local-only mount). Host widget-test
 evidence only: no transport, target execution, platform screen reader, or
 physical evidence. Parent #6 remains open.
+
+## CONN-03 schedule-flow demo mount evidence (issue #67)
+
+`app/lib/ui/schedule_flow_demo_page.dart` mounts the existing flow panel
+behind an "Open schedule flow demo" home entry over a seeded in-memory
+mirror (two baseline alarms at revision 3) and an editable demo proposal.
+Review runs the real domain diff and preview framing runs the real
+`ScheduleExchange` contract gate; the framed `schedule.preview` envelope is
+shown on screen explicitly as local, undelivered output. The demo receives no
+apply token and no receipt — none is synthesized — so apply confirmation is
+unreachable there by construction and the mirror provably never advances.
+Cancel abandons only local demo state; it is not a device rollback. Host
+widget tests (`app/test/schedule_flow_demo_page_test.dart`) pin navigation,
+review recomputation from a toggled proposal, preview framing with invariant
+mirror revision, disabled apply, cancel returning to idle, same-process route
+recreation resetting demo state, and 320px/200%-text layout. No authenticated
+transport, token/receipt authenticity, target execution, or physical evidence
+is supplied. Parent #6 remains open.
 
 ## Release-report rule
 
@@ -138,7 +157,10 @@ widget (issue #65), which renders the schedule-flow presentation controller's
 explicit review, preview, confirmation, pending, refusal, and conflict states
 with live-region status and 48px action gates. It performs no network I/O,
 synthesizes no receipt or token, cannot prove device outcome or authentication,
-and is not yet mounted in app navigation. The
+and is mounted since issue #67 in the local-only `schedule_flow_demo_page.dart`
+route, which seeds an in-memory mirror, runs real review/preview framing, and
+never receives a token or receipt, so the apply-confirmation phase is
+unreachable there by construction. The
 demo-page tests assert real file creation, discovery, and deletion, but they
 prove nothing about platform storage plugins, file pickers, encryption, an
 app process restart, target-device execution, or physical assistive
