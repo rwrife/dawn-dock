@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'demo_controller.dart';
 import 'ui/backup_demo_page.dart';
 import 'ui/device_status_demo_page.dart';
+import 'ui/pairing_demo_page.dart';
 import 'ui/schedule_flow_demo_page.dart';
+
 import 'ui/schedule_review_demo_page.dart';
 
 void main() => runApp(const MyApp());
@@ -228,6 +230,20 @@ class _DemoHomePageState extends State<DemoHomePage> {
                       ),
                       icon: const Icon(Icons.sync_outlined),
                       label: const Text('Open schedule flow demo'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('pairing-demo'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const PairingDemoPage(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.link_off),
+                      label: const Text('Open pairing demo'),
                     ),
                   ),
                 ],
