@@ -20,17 +20,24 @@ issue #6. The architectural and privacy boundaries are defined in
 [threat model](../docs/threat-model.md), and the
 [protocol](../docs/protocol.md).
 
-## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53, #63), backup panel widget (issue #55), backup demo page (issue #57), schedule review panel + demo page (issue #59), schedule flow panel + local demo page (issues #65, #67), and unmounted pairing review panel (issue #69)
+## Local domain layer (issues #35, #39, #41, #43, #45, #47, #49, #51, #53, #63), backup panel widget (issue #55), backup demo page (issue #57), schedule review panel + demo page (issue #59), schedule flow panel + local demo page (issues #65, #67), and pairing review panel + local demo page (issues #69, #71)
 
-`ui/pairing_review_panel.dart` renders a caller-supplied `PairingCeremony` as an
-unmounted local review surface. Short code and fingerprint are entered explicitly;
+`ui/pairing_review_panel.dart` renders a caller-supplied `PairingCeremony` as a
+local review surface. Short code and fingerprint are entered explicitly;
 matching accepts only the local comparison. Seven host widget tests cover pre-window
 blocking, wrong-value attempt counting/closure, expiry without a tap and during
 a racing confirmation, cancellation, input clearing on ceremony replacement, timer disposal,
 text-only live-region status, labeled inputs, 48px controls, and narrow 200% text.
-The injected clock is not monotonic and a fresh ceremony resets attempt counts;
-this widget has no handshake, credential, secure storage, paired record, discovery,
-transport, on-device verification, or physical accessibility evidence.
+`ui/pairing_demo_page.dart` mounts it behind "Open pairing demo" over fixed
+illustrative code/fingerprint in a simulated 120-second window. It starts
+closed by default and only constructs a ceremony on an explicit local tap.
+Discard clears page-local state; advancing the demo clock tests local expiry.
+No code, fingerprint, or window came from a device. Comparison succeeds only
+locally; no paired record is created. The injected clock is not monotonic and
+a fresh ceremony resets attempt counts. There is no handshake, credential,
+secure storage, discovery, transport, on-device verification, or physical
+accessibility evidence. Closing/discarding this page never closes a real
+clock's pairing window.
 
 
 `lib/domain/` adds pure-Dart building blocks behind the demo, and
