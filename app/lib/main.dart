@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'demo_controller.dart';
 import 'ui/backup_demo_page.dart';
+import 'ui/calendar_import_demo_page.dart';
 import 'ui/device_status_demo_page.dart';
 import 'ui/pairing_demo_page.dart';
 import 'ui/schedule_flow_demo_page.dart';
@@ -230,6 +231,20 @@ class _DemoHomePageState extends State<DemoHomePage> {
                       ),
                       icon: const Icon(Icons.sync_outlined),
                       label: const Text('Open schedule flow demo'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('calendar-import-demo'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const CalendarImportDemoPage(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.event_note_outlined),
+                      label: const Text('Open calendar import demo'),
                     ),
                   ),
                   const SizedBox(height: 16),
