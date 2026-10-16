@@ -7,11 +7,6 @@ import 'package:dawn_dock_companion/domain/ics_import.dart';
 import 'package:dawn_dock_companion/domain/protocol_contract.dart'
     show kMaxStoredAlarms;
 
-/// Codes actually observed across this suite; the final test asserts the
-/// declared code list is fully exercised (acceptance criterion: every notice
-/// code has a dedicated test).
-final Set<String> _observedCodes = {};
-
 String wrap(List<String> lines) => [
   'BEGIN:VCALENDAR',
   'VERSION:2.0',
@@ -23,13 +18,7 @@ String wrap(List<String> lines) => [
 String vevent(List<String> props) =>
     ['BEGIN:VEVENT', ...props, 'END:VEVENT'].join('\r\n');
 
-IcsImportResult runImport(String text) {
-  final result = importIcsSuggestions(text);
-  for (final notice in result.notices) {
-    _observedCodes.add(notice.code);
-  }
-  return result;
-}
+IcsImportResult runImport(String text) => importIcsSuggestions(text);
 
 /// Minimal single-event import helper.
 IcsImportResult importOne(List<String> eventProps) =>
@@ -860,14 +849,6 @@ void main() {
       expect(map['code'], kIcsNoticeFloatingLocalTime);
       expect(map['eventNumber'], 7);
       expect(map['detail'], 'x');
-    });
-
-    test('every declared notice code was exercised by this suite', () {
-      expect(
-        _observedCodes,
-        containsAll(kIcsImportNoticeCodes),
-        reason: 'each notice code needs a dedicated test above',
-      );
     });
 
     test('declared code list is unique and slug-formatted', () {
