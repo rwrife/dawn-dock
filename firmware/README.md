@@ -54,6 +54,28 @@ Host fixtures cover the 2026 spring and fall transitions for `America/New_York` 
 
 `json_parser` + `message_body_validator` extend that gate into a full message gate. `parse_json` is a strict, bounded JSON subset for untrusted transport input: fixed depth/node/string ceilings, integer-only numbers inside the int64 range, mandatory well-formed UTF-8 (raw bytes and `\u` escapes, including surrogate-pair assembly and lone-surrogate rejection), duplicate-key and trailing-content rejection, and no exceptions — every failure returns a stable code plus a JSON-pointer-like field path. `validate_protocol_message_body` then checks decoded bodies against the checked-in v1 schemas: schedule preview/apply alarm records (exact key sets, id/localTime patterns, weekday bounds/uniqueness, snooze/volume ranges, source enum), error responses (stable code enum, summary/field bounds), and sync receipts (bounded revision/count with the 32-alarm storage ceiling, strict-UTC next-alarm instant), while the remaining known v1 types pass through until body schemas are committed. `validate_protocol_message` composes envelope preflight, parsing, and body validation into one decision whose `code` is the stable error-model string from `docs/protocol.md`. `protocol_fixture_cross_language_tests` drives the same `docs/protocol/fixtures/v1` manifest through the C++ chain that `protocol_fixture_contract_tests` checks in Python, pinning cross-language agreement. These are host software tests; the authenticated transport that will feed this gate, plus fuzzing corpora and target overload behavior, remain open.
 
+## Host-tested control debounce
+
+`ControlDebounce` in `alarm_core` models one post-Schmitt push input per
+instance (snooze, brightness, or encoder switch). Encoder A/B rotation needs a
+separate quadrature policy and PEC11R timing basis and is not covered here. Its
+caller supplies a
+polarity-resolved pressed state and a monotonic clock in milliseconds. It
+accepts a state change after 20 ms of stability, emits exactly one edge for a
+press, and re-arms only after a stable release. A control already held at boot
+becomes a baseline without acting; a clock regression restarts the pending
+window. The Omron B3F datasheet's Ratings/Characteristics section specifies
+**5 ms max bounce** for the push switches; 20 ms gives a 4x static margin.
+Within the system's 100 ms valid-press budget, **80 ms remains** for input
+polling and downstream dispatch, which is not measured yet.
+
+`control_debounce_tests` exercises bounce on both edges, sustained presses,
+independent buttons, boot-held input, clock regression, and extreme int64
+clock values. No ESP32 GPIO adapter calls this policy yet; hardware switch
+behavior, under-load poll interval, edge dispatch, and end-to-end response
+latency require target integration and bench evidence. This host policy alone
+is not evidence that any physical control works.
+
 ## Pinned toolchain
 
 - ESP-IDF release: `v5.5.5` (`.idf-version`)

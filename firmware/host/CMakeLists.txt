@@ -9,6 +9,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/alarm_engine.cpp
   ../components/alarm_core/committed_alarm_disable.cpp
   ../components/alarm_core/committed_schedule_evaluator.cpp
+  ../components/alarm_core/control_debounce.cpp
   ../components/alarm_core/invalid_time_recovery.cpp
   ../components/alarm_core/json_parser.cpp
   ../components/alarm_core/message_body_validator.cpp
@@ -44,6 +45,12 @@ add_executable(alarm_engine_tests tests/alarm_engine_test.cpp)
 target_link_libraries(alarm_engine_tests PRIVATE dawn_alarm_core)
 target_compile_options(alarm_engine_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME alarm_engine_tests COMMAND alarm_engine_tests)
+
+add_executable(control_debounce_tests tests/control_debounce_test.cpp)
+target_link_libraries(control_debounce_tests PRIVATE dawn_alarm_core)
+target_compile_options(control_debounce_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME control_debounce_tests COMMAND control_debounce_tests)
+# ponytail: no GPIO simulator; bench timing belongs to device adapter work.
 
 add_executable(schedule_store_tests tests/schedule_store_test.cpp)
 target_link_libraries(schedule_store_tests PRIVATE dawn_alarm_core)
