@@ -178,8 +178,18 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   unless `allowStale: true` is explicitly provided. `test/backup_coordinator_test.dart`
   verifies export snapshot consistency, inspect isolation, missing file
   handling, complete store restore, stale rejection/override, corrupt
-  file fail-closed behavior, direct in-memory restore (`restoreBackup`), and
-  erase idempotency.
+  file fail-closed behavior, direct in-memory restore (`restoreBackup`),
+  erase idempotency, and coordinated local-data erasure (`eraseLocalData`)
+  that removes the owned backup file before clearing profiles, drafts,
+  and committed schedule mirror with fail-closed retention if file
+  deletion fails. `test/local_data_erase_test.dart` covers populated and empty
+  stores, repeat calls, receipt/revision reset, and file-delete failure.
+  This domain method is not wired to a UI; the existing demo's "Erase backup"
+  still deletes only the backup file. It touches only caller-supplied in-memory
+  stores and one file in a caller-supplied directory. It does not delete
+  Keychain/Keystore credentials, platform-private files, or device data;
+  it offers no secure-erasure guarantee. Platform adapters, user confirmation,
+  and physical-device reset remain open.
 - `backup_flow_controller.dart` adds issue #53's host-tested presentation
   state machine over `BackupCoordinator` without adding UI or plugin
   dependencies. It serializes backup actions (export/inspect/restore/erase),
