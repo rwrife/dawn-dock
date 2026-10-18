@@ -189,4 +189,34 @@ class BackupCoordinator {
 
   /// Deletes the saved backup file. Safe to call when no backup exists.
   Future<void> erase() => backupStore.erase();
+
+  /// Removes every piece of companion data this coordinator owns: the saved
+  /// backup file first, then the live profile registry, draft set, and
+  /// committed schedule mirror (revision and receipt included).
+  ///
+  /// Ordering is the failure guarantee: the file deletion runs before any
+  /// in-memory store is touched, so a file deletion error propagates with
+  /// every live store still intact and the operation is honestly retriable —
+  /// a partial erase is never reported as success. Repeated calls on
+  /// already-empty state are safe.
+  ///
+  /// Exact scope limits (do not overstate this):
+  /// * The backup file is only the one file in the caller-supplied
+  ///   [LocalBackupStore] directory; nothing scans or wipes a directory,
+  ///   and there is no OS-level secure/sanitized erasure guarantee.
+  /// * The live stores are the caller-owned in-memory objects wired into
+  ///   this coordinator. Credentials, platform secure storage
+  ///   (Keychain/Keystore), pairing state, OS app storage, and any real
+  ///   device's stored schedule are NOT touched here — a device factory
+  ///   reset requires physical confirmation on the device itself.
+  /// * On-device erase evidence is host-software scope only.
+  ///
+  /// ponytail: file + caller-owned stores only; add platform adapters and
+  /// credential vault deletion when real storage is wired.
+  Future<void> eraseLocalData() async {
+    await backupStore.erase();
+    profileStore.replaceAll(const []);
+    draftSet.clear();
+    scheduleStore.clear();
+  }
 }
