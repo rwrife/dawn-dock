@@ -19,6 +19,8 @@ class InMemoryBackupStore extends LocalBackupStore {
 
   String? text;
   Completer<void>? saveGate;
+  Completer<void>? eraseGate;
+  bool failErase = false;
 
   @override
   Future<void> saveText(String backupText) async {
@@ -34,6 +36,13 @@ class InMemoryBackupStore extends LocalBackupStore {
 
   @override
   Future<void> erase() async {
+    final gate = eraseGate;
+    if (gate != null) {
+      await gate.future;
+    }
+    if (failErase) {
+      throw const FileSystemException('simulated delete failure');
+    }
     text = null;
   }
 }
@@ -195,6 +204,99 @@ void main() {
     await tester.pumpAndSettle();
     expect(_statusMessage(tester), contains('no saved backup file exists'));
   });
+
+  testWidgets(
+    'local data erase requires confirmation, cancellation preserves state, repeat safe',
+    (tester) async {
+      await fx.seedBackupRevision3();
+      await _mount(tester, fx.controller);
+
+      await tester.tap(find.byKey(const ValueKey('erase-local-data')));
+      await tester.pump();
+      expect(_statusMessage(tester), contains('confirmation required'));
+      expect(fx.store.text, isNotNull);
+      expect(fx.schedule.knownRevision, 5);
+      await tester.tap(find.byKey(const ValueKey('cancel-erase-local-data')));
+      await tester.pump();
+      expect(fx.schedule.knownRevision, 5);
+      expect(fx.store.text, isNotNull);
+
+      await tester.tap(find.byKey(const ValueKey('erase-local-data')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('confirm-erase-local-data')));
+      await tester.pumpAndSettle();
+      expect(
+        _statusMessage(tester),
+        contains('local data and backup file erased'),
+      );
+      expect(fx.store.text, isNull);
+      expect(fx.profiles.profiles, isEmpty);
+      expect(fx.drafts.drafts, isEmpty);
+      expect(fx.schedule.knownRevision, 0);
+      expect(fx.schedule.committedAlarms, isEmpty);
+      await tester.tap(find.byKey(const ValueKey('erase-local-data')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('confirm-erase-local-data')));
+      await tester.pumpAndSettle();
+      expect(
+        _statusMessage(tester),
+        contains('local data and backup file erased'),
+      );
+    },
+  );
+
+  testWidgets(
+    'file-delete failure retains every live store and reports failure',
+    (tester) async {
+      await fx.seedBackupRevision3();
+      fx.profiles.upsert(
+        DeviceProfile(identity: 'live', displayName: 'Live Dock'),
+      );
+      fx.drafts.put(_draft('live-draft'));
+      fx.store.failErase = true;
+      await _mount(tester, fx.controller);
+      await tester.tap(find.byKey(const ValueKey('erase-local-data')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('confirm-erase-local-data')));
+      await tester.pumpAndSettle();
+      expect(_statusMessage(tester), contains('eraseLocalData failed'));
+      expect(fx.store.text, isNotNull);
+      expect(fx.profiles.profiles.single.identity, 'live');
+      expect(fx.drafts.drafts.single.id, 'live-draft');
+      expect(fx.schedule.knownRevision, 5);
+      expect(fx.schedule.committedAlarms.single.id, 'live-committed');
+    },
+  );
+
+  testWidgets(
+    'confirmation locks out overlapping actions while deletion waits',
+    (tester) async {
+      await fx.seedBackupRevision3();
+      fx.store.eraseGate = Completer<void>();
+      await _mount(tester, fx.controller);
+      await tester.tap(find.byKey(const ValueKey('erase-local-data')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('confirm-erase-local-data')));
+      await tester.pump();
+      expect(fx.controller.isBusy, isTrue);
+      for (final key in [
+        'export',
+        'check',
+        'restore',
+        'erase',
+        'erase-local-data',
+      ]) {
+        expect(_buttonEnabled(find.byKey(ValueKey(key))), isFalse);
+      }
+      expect(
+        find.byKey(const ValueKey('confirm-erase-local-data')),
+        findsNothing,
+      );
+      fx.store.eraseGate!.complete();
+      await tester.pumpAndSettle();
+      expect(fx.controller.isBusy, isFalse);
+    },
+  );
 
   testWidgets('all actions are disabled while an operation is busy', (
     tester,

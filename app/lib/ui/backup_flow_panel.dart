@@ -52,6 +52,16 @@ class _BackupFlowPanelState extends State<BackupFlowPanel> {
     setState(() {});
   }
 
+  void _requestEraseLocalData() {
+    widget.controller.requestEraseLocalData();
+    setState(() {});
+  }
+
+  void _cancelEraseLocalData() {
+    widget.controller.cancelEraseLocalData();
+    setState(() {});
+  }
+
   String _statusMessage(BackupFlowState state) {
     return switch (state) {
       BackupInitial() => 'Backup status: no action has run yet.',
@@ -73,6 +83,13 @@ class _BackupFlowPanelState extends State<BackupFlowPanel> {
             'revision $backupRevision but the current schedule is at '
             'revision $currentRevision. Nothing has been restored yet. '
             'Confirm only if you intend to restore the older schedule.',
+      BackupEraseLocalConfirmationRequired() =>
+        'Backup status: confirmation required. Erasing all local data '
+            'will delete the local backup file and clear all in-memory '
+            'profiles, drafts, and schedule revisions. This cannot be '
+            'undone.',
+      BackupLocalDataErased() =>
+        'Backup status: all caller-owned local data and backup file erased.',
       BackupFailure(:final operation, :final message) =>
         'Backup status: ${operation.name} failed. $message',
     };
@@ -90,6 +107,7 @@ class _BackupFlowPanelState extends State<BackupFlowPanel> {
     final busy = widget.controller.isBusy;
     final status = _statusMessage(state);
     final stale = state is BackupStaleConfirmationRequired;
+    final eraseLocalPrompt = state is BackupEraseLocalConfirmationRequired;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -136,8 +154,36 @@ class _BackupFlowPanelState extends State<BackupFlowPanel> {
                 onPressed: busy ? null : () => _run(widget.controller.erase),
                 child: const Text('Erase backup'),
               ),
+              OutlinedButton(
+                key: const ValueKey('erase-local-data'),
+                style: _secondaryActionStyle,
+                onPressed: busy ? null : _requestEraseLocalData,
+                child: const Text('Erase all local data'),
+              ),
             ],
           ),
+          if (eraseLocalPrompt) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton(
+                  key: const ValueKey('confirm-erase-local-data'),
+                  style: _actionStyle,
+                  onPressed: () =>
+                      _run(widget.controller.confirmEraseLocalData),
+                  child: const Text('Confirm erase all local data'),
+                ),
+                OutlinedButton(
+                  key: const ValueKey('cancel-erase-local-data'),
+                  style: _secondaryActionStyle,
+                  onPressed: _cancelEraseLocalData,
+                  child: const Text('Cancel erase'),
+                ),
+              ],
+            ),
+          ],
           if (stale) ...[
             const SizedBox(height: 16),
             Wrap(

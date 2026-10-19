@@ -20,7 +20,8 @@ import 'backup.dart';
 import 'backup_coordinator.dart';
 
 /// The kind of operation currently in progress or recently completed.
-enum BackupOperation { export, inspect, restore, erase }
+// ponytail: caller-owned stores only; add platform storage when integrated.
+enum BackupOperation { export, inspect, restore, erase, eraseLocalData }
 
 /// Sealed hierarchy of presentation states for backup flows.
 sealed class BackupFlowState {
@@ -92,6 +93,16 @@ final class BackupStaleConfirmationRequired extends BackupFlowState {
   @override
   String toString() =>
       'BackupStaleConfirmationRequired(backupRev: $backupRevision, currentRev: $currentRevision)';
+}
+
+/// Explicit destructive action awaits confirmation; no stores have changed.
+final class BackupEraseLocalConfirmationRequired extends BackupFlowState {
+  const BackupEraseLocalConfirmationRequired();
+}
+
+/// Caller-owned file and in-memory stores erased.
+final class BackupLocalDataErased extends BackupFlowState {
+  const BackupLocalDataErased();
 }
 
 /// An operation failed with an error.
@@ -371,6 +382,43 @@ class BackupFlowController {
         previousSummary: prev,
       );
       return true;
+    }
+  }
+
+  /// Request separate, explicit confirmation before erasing caller-owned data.
+  bool requestEraseLocalData() {
+    if (_isBusy) return false;
+    _state = const BackupEraseLocalConfirmationRequired();
+    return true;
+  }
+
+  bool cancelEraseLocalData() {
+    if (_state is! BackupEraseLocalConfirmationRequired || _isBusy) {
+      return false;
+    }
+    _state = const BackupInitial();
+    return true;
+  }
+
+  Future<bool> confirmEraseLocalData() async {
+    if (_isBusy) return false;
+    if (_state is! BackupEraseLocalConfirmationRequired) {
+      throw StateError('local data erase requires confirmation');
+    }
+    _isBusy = true;
+    _state = const BackupBusy(operation: BackupOperation.eraseLocalData);
+    try {
+      await coordinator.eraseLocalData();
+      _state = const BackupLocalDataErased();
+      return true;
+    } catch (e) {
+      _state = BackupFailure(
+        operation: BackupOperation.eraseLocalData,
+        message: e.toString(),
+      );
+      return true;
+    } finally {
+      _isBusy = false;
     }
   }
 
