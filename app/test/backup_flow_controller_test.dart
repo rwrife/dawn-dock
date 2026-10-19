@@ -262,4 +262,37 @@ void main() {
     expect(await controller.erase(), isTrue);
     expect(controller.state, isA<BackupAbsent>());
   });
+
+  test('eraseLocalData requires confirmation, cancellation preserves, confirm clears stores', () async {
+    profiles.upsert(DeviceProfile(identity: 'dock-1', displayName: 'Dock'));
+    drafts.put(_draft('d-1'));
+    schedule.replaceAll(revision: 3, alarms: [_draft('c-1')]);
+    await controller.export();
+
+    expect(controller.requestEraseLocalData(), isTrue);
+    expect(controller.state, isA<BackupEraseLocalConfirmationRequired>());
+    expect(profiles.profiles, isNotEmpty);
+
+    // Cancel
+    expect(controller.cancelEraseLocalData(), isTrue);
+    expect(controller.state, isA<BackupInitial>());
+    expect(profiles.profiles, isNotEmpty);
+
+    // Confirm
+    expect(controller.requestEraseLocalData(), isTrue);
+    final erased = await controller.confirmEraseLocalData();
+    expect(erased, isTrue);
+    expect(controller.state, isA<BackupLocalDataErased>());
+    expect(profiles.profiles, isEmpty);
+    expect(drafts.drafts, isEmpty);
+    expect(schedule.knownRevision, 0);
+    expect(await backupStore.load(), isNull);
+  });
+
+  test(
+    'confirmEraseLocalData throws StateError without prior request',
+    () async {
+      expect(() => controller.confirmEraseLocalData(), throwsStateError);
+    },
+  );
 }

@@ -184,17 +184,21 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   and committed schedule mirror with fail-closed retention if file
   deletion fails. `test/local_data_erase_test.dart` covers populated and empty
   stores, repeat calls, receipt/revision reset, and file-delete failure.
-  This domain method is not wired to a UI; the existing demo's "Erase backup"
-  still deletes only the backup file. It touches only caller-supplied in-memory
-  stores and one file in a caller-supplied directory. It does not delete
-  Keychain/Keystore credentials, platform-private files, or device data;
-  it offers no secure-erasure guarantee. Platform adapters, user confirmation,
-  and physical-device reset remain open.
+  Issue #81 wires this action into `backup_flow_controller.dart` and
+  `backup_flow_panel.dart` as "Erase all local data" with an explicit
+  two-step confirmation prompt ("Confirm erase all local data" / "Cancel erase")
+  to keep it distinct from the file-only "Erase backup" action. Cancellation
+  leaves all live stores untouched, overlapping actions are locked out while
+  busy, and a file deletion failure reports error text while retaining in-memory
+  stores. It touches only caller-supplied in-memory stores and one file in a
+  caller-supplied directory. It does not delete Keychain/Keystore credentials,
+  platform-private files, or device data; it offers no secure-erasure guarantee.
+  Platform adapters and physical-device reset remain open.
 - `backup_flow_controller.dart` adds issue #53's host-tested presentation
   state machine over `BackupCoordinator` without adding UI or plugin
-  dependencies. It serializes backup actions (export/inspect/restore/erase),
-  reports distinct idle/busy/absent/success/failure states, and models stale
-  revision refusal as an explicit `BackupStaleConfirmationRequired` state so
+  dependencies. It serializes backup actions (export/inspect/restore/erase
+  and confirmed erase-local-data), reports distinct idle/busy/absent/success/failure
+  states, and models stale revision refusal as an explicit `BackupStaleConfirmationRequired` state so
   a caller must opt in through `confirmStaleRestore()` before retrying with
   `allowStale: true`. `test/backup_flow_controller_test.dart` covers overlap
   rejection while busy, missing-versus-corrupt backup distinction, stale
