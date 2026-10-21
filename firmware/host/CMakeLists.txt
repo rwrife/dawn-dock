@@ -14,6 +14,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/json_parser.cpp
   ../components/alarm_core/message_body_validator.cpp
   ../components/alarm_core/protocol_service.cpp
+  ../components/alarm_core/quadrature_encoder.cpp
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/runtime_coordinator.cpp
   ../components/alarm_core/schedule_materializer.cpp
@@ -51,6 +52,11 @@ target_link_libraries(control_debounce_tests PRIVATE dawn_alarm_core)
 target_compile_options(control_debounce_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME control_debounce_tests COMMAND control_debounce_tests)
 # ponytail: no GPIO simulator; bench timing belongs to device adapter work.
+
+add_executable(quadrature_encoder_tests tests/quadrature_encoder_test.cpp)
+target_link_libraries(quadrature_encoder_tests PRIVATE dawn_alarm_core)
+target_compile_options(quadrature_encoder_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME quadrature_encoder_tests COMMAND quadrature_encoder_tests)
 
 add_executable(schedule_store_tests tests/schedule_store_test.cpp)
 target_link_libraries(schedule_store_tests PRIVATE dawn_alarm_core)
