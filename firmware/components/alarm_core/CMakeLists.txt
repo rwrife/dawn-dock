@@ -8,6 +8,7 @@ idf_component_register(
     "json_parser.cpp"
     "message_body_validator.cpp"
     "protocol_service.cpp"
+    "quadrature_encoder.cpp"
     "recurrence_resolver.cpp"
     "runtime_coordinator.cpp"
     "schedule_materializer.cpp"

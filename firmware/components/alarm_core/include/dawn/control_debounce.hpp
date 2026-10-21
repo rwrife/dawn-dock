@@ -12,8 +12,8 @@ namespace dawn {
 // (snooze, brightness, encoder switch). The Omron B3F datasheet specifies
 // push-switch bounce time as 5 ms max. Requiring the input to hold one stable
 // logic level for 20 ms gives a 4x margin before any transition is accepted.
-// Encoder A/B rotation needs its own quadrature state machine and PEC11R
-// timing basis; do not reuse this press-edge policy on those phases.
+// Encoder A/B rotation has its own quadrature state machine in
+// `dawn::QuadratureEncoder`; do not reuse this press-edge policy on A/B.
 // The valid-press response budget from docs/system-architecture.md is 100 ms;
 // the 20 ms stable window leaves 80 ms for polling and alarm-engine dispatch.
 inline constexpr std::int64_t kDebounceStableMilliseconds = 20;

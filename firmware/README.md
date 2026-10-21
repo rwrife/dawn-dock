@@ -57,8 +57,8 @@ Host fixtures cover the 2026 spring and fall transitions for `America/New_York` 
 ## Host-tested control debounce
 
 `ControlDebounce` in `alarm_core` models one post-Schmitt push input per
-instance (snooze, brightness, or encoder switch). Encoder A/B rotation needs a
-separate quadrature policy and PEC11R timing basis and is not covered here. Its
+instance (snooze, brightness, or encoder switch). Encoder A/B rotation has its
+own quadrature policy; see "Host-tested quadrature encoder policy" below. Its
 caller supplies a
 polarity-resolved pressed state and a monotonic clock in milliseconds. It
 accepts a state change after 20 ms of stability, emits exactly one edge for a
@@ -75,6 +75,30 @@ clock values. No ESP32 GPIO adapter calls this policy yet; hardware switch
 behavior, under-load poll interval, edge dispatch, and end-to-end response
 latency require target integration and bench evidence. This host policy alone
 is not evidence that any physical control works.
+
+## Host-tested quadrature encoder policy
+
+`QuadratureEncoder` in `alarm_core` tracks the 2-bit Gray code produced by
+the Bourns PEC11R-4215F-S0024 incremental rotary encoder's A/B contacts
+after the SN74LVC14A Schmitt inverter. The caller resolves the active-low
+signals into positive `a_high`/`b_high` levels and provides the separate push
+switch state.
+
+The Bourns PEC11R datasheet (REV.D04/26) specifies 24 pulses and 24 detents
+per 360° rotation, a 2.0 ms max contact bounce at 15 RPM with external
+filters, and a 60 RPM maximum operating speed. The datasheet specifies no
+minimum A/B phase spacing. The software policy processes single-bit Gray
+transitions, enforces full four-step cycle resolution (+1 for logical forward
+`00 -> 01 -> 11 -> 10 -> 00`, -1 for reverse), resets partial progress on
+two-bit diagonal jumps rather than inventing motion, and suppresses rotation
+while the push switch is held or settling at release.
+
+`quadrature_encoder_tests` exercises forward and reverse cycles, 24 synthetic
+consecutive complete cycles, partial turns and direction reversals, self-canceling
+first-edge bounce, two-bit jump resets, push suppression, and boot resting on a
+non-zero phase. Analog filtering, detent-to-phase electrical alignment,
+clockwise direction mapping, and physical knob handling require target
+integration and bench capture.
 
 ## Pinned toolchain
 
