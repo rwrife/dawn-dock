@@ -28,34 +28,12 @@ bool all_digits(std::string_view value) {
          });
 }
 
-bool is_valid_iso_utc(std::string_view sent_at_utc) {
-  // Strict RFC 3339 UTC form required by protocol examples:
-  // YYYY-MM-DDTHH:MM:SSZ (20 bytes)
-  if (sent_at_utc.size() != 20) {
-    return false;
+int digits_to_int(std::string_view digits) {
+  int value = 0;
+  for (char digit : digits) {
+    value = value * 10 + (digit - '0');
   }
-  if (sent_at_utc[4] != '-' || sent_at_utc[7] != '-' || sent_at_utc[10] != 'T' ||
-      sent_at_utc[13] != ':' || sent_at_utc[16] != ':' || sent_at_utc[19] != 'Z') {
-    return false;
-  }
-  if (!all_digits(sent_at_utc.substr(0, 4)) ||
-      !all_digits(sent_at_utc.substr(5, 2)) ||
-      !all_digits(sent_at_utc.substr(8, 2)) ||
-      !all_digits(sent_at_utc.substr(11, 2)) ||
-      !all_digits(sent_at_utc.substr(14, 2)) ||
-      !all_digits(sent_at_utc.substr(17, 2))) {
-    return false;
-  }
-
-  const auto month = std::stoi(std::string(sent_at_utc.substr(5, 2)));
-  const auto day = std::stoi(std::string(sent_at_utc.substr(8, 2)));
-  const auto hour = std::stoi(std::string(sent_at_utc.substr(11, 2)));
-  const auto minute = std::stoi(std::string(sent_at_utc.substr(14, 2)));
-  const auto second = std::stoi(std::string(sent_at_utc.substr(17, 2)));
-
-  return month >= 1 && month <= 12 && day >= 1 && day <= 31 && hour >= 0 &&
-         hour <= 23 && minute >= 0 && minute <= 59 && second >= 0 &&
-         second <= 59;
+  return value;
 }
 
 bool is_known_request_type(std::string_view type) {
@@ -74,6 +52,31 @@ bool requires_expected_revision(std::string_view type) {
 }
 
 }  // namespace
+
+bool is_valid_protocol_utc_instant(std::string_view value) {
+  if (value.size() != 20 || value[4] != '-' || value[7] != '-' ||
+      value[10] != 'T' || value[13] != ':' || value[16] != ':' ||
+      value[19] != 'Z' || !all_digits(value.substr(0, 4)) ||
+      !all_digits(value.substr(5, 2)) || !all_digits(value.substr(8, 2)) ||
+      !all_digits(value.substr(11, 2)) || !all_digits(value.substr(14, 2)) ||
+      !all_digits(value.substr(17, 2))) {
+    return false;
+  }
+  const int year = digits_to_int(value.substr(0, 4));
+  const int month = digits_to_int(value.substr(5, 2));
+  const int day = digits_to_int(value.substr(8, 2));
+  const int hour = digits_to_int(value.substr(11, 2));
+  const int minute = digits_to_int(value.substr(14, 2));
+  const int second = digits_to_int(value.substr(17, 2));
+  if (year == 0 || month < 1 || month > 12 || hour > 23 || minute > 59 ||
+      second > 59) {
+    return false;
+  }
+  constexpr std::array<int, 12> days_per_month =
+      {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  const bool leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+  return day >= 1 && day <= days_per_month[month - 1] + (month == 2 && leap);
+}
 
 bool ReplayWindow::contains(std::string_view message_id) const {
   return set_.contains(std::string(message_id));
@@ -116,7 +119,7 @@ ProtocolValidationResult validate_protocol_envelope(
             .accepted = false,
             .retryable = true};
   }
-  if (!is_valid_iso_utc(envelope.sent_at_utc)) {
+  if (!is_valid_protocol_utc_instant(envelope.sent_at_utc)) {
     return {.code = ProtocolValidationCode::invalid_sent_at,
             .accepted = false,
             .retryable = false};

@@ -52,6 +52,11 @@
       "expected_code": "invalid_sent_at"
     },
     {
+      "path": "invalid/invalid_sent_at_calendar_date.request.json",
+      "valid": false,
+      "expected_code": "invalid_sent_at"
+    },
+    {
       "path": "invalid/schedule_alarm_bad_snooze.request.json",
       "valid": false,
       "expected_code": "schema_invalid"

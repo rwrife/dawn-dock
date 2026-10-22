@@ -264,6 +264,55 @@ void main() {
       },
     );
 
+    test(
+      'calendar-valid UTC instants are required in envelopes and receipts',
+      () {
+        for (final instant in [
+          '2026-02-30T10:00:00Z',
+          '2025-02-29T10:00:00Z',
+          '2026-04-31T10:00:00Z',
+          '0000-01-01T00:00:00Z',
+        ]) {
+          expect(
+            validateContractMessage(
+              envelope(
+                {},
+                type: 'device.status.get',
+                expectedRevision: null,
+                sentAt: instant,
+              ),
+            ),
+            ContractCode.invalidSentAt,
+          );
+          expect(
+            validateContractMessage(
+              envelope(
+                {
+                  'appliedRevision': 1,
+                  'alarmCount': 1,
+                  'nextAlarmUtc': instant,
+                },
+                type: 'event.syncReceipt',
+                expectedRevision: null,
+              ),
+            ),
+            ContractCode.schemaInvalid,
+          );
+        }
+        expect(
+          validateContractMessage(
+            envelope(
+              {},
+              type: 'device.status.get',
+              expectedRevision: null,
+              sentAt: '2024-02-29T23:59:59Z',
+            ),
+          ),
+          ContractCode.accepted,
+        );
+      },
+    );
+
     test('sync receipt beyond the storage bound is a semantic error', () {
       final code = validateContractMessage(
         envelope(

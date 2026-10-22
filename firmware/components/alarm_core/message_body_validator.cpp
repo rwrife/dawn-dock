@@ -1,4 +1,5 @@
 #include "dawn/message_body_validator.hpp"
+#include "dawn/protocol_service.hpp"
 
 #include <algorithm>
 #include <array>
@@ -366,21 +367,6 @@ MessageBodyValidationResult validate_error_response_body(
   return accept_body();
 }
 
-bool is_strict_utc_instant(std::string_view value) {
-  // Same strict form the envelope gate applies to sentAt.
-  if (value.size() != 20 || value[4] != '-' || value[7] != '-' ||
-      value[10] != 'T' || value[13] != ':' || value[16] != ':' ||
-      value[19] != 'Z') {
-    return false;
-  }
-  const auto digit = [](char c) { return c >= '0' && c <= '9'; };
-  return digit(value[0]) && digit(value[1]) && digit(value[2]) &&
-         digit(value[3]) && digit(value[5]) && digit(value[6]) &&
-         digit(value[8]) && digit(value[9]) && digit(value[11]) &&
-         digit(value[12]) && digit(value[14]) && digit(value[15]) &&
-         digit(value[17]) && digit(value[18]);
-}
-
 MessageBodyValidationResult validate_sync_receipt_body(const JsonValue &body) {
   // event.syncReceipt has no checked-in JSON Schema yet; the fixture
   // contract requires these three keys, so this core pins bounded types for
@@ -417,7 +403,7 @@ MessageBodyValidationResult validate_sync_receipt_body(const JsonValue &body) {
   if (!require_string(body, "nextAlarmUtc", "", text, failure)) {
     return failure;
   }
-  if (!is_strict_utc_instant(text)) {
+  if (!is_valid_protocol_utc_instant(text)) {
     return reject(MessageBodyCode::schema_invalid, "/nextAlarmUtc");
   }
   return accept_body();

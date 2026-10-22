@@ -41,6 +41,10 @@ struct ProtocolValidationResult {
   bool retryable{};
 };
 
+// Strict 20-byte UTC instant with a real Gregorian date (year 0001..9999).
+// Used for both envelope sentAt and sync receipt nextAlarmUtc.
+[[nodiscard]] bool is_valid_protocol_utc_instant(std::string_view value);
+
 // Bounded duplicate detector keyed by message ID.
 class ReplayWindow {
  public:

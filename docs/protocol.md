@@ -51,7 +51,7 @@ The fixture manifest is normative for cross-language compatibility tests: app-si
 Rules:
 
 - The serialized envelope is at most 64 KiB; operations must define tighter collection/string/recurrence limits where practical.
-- Reject unknown major protocol versions, duplicate/replayed IDs, oversized frames, invalid timestamps where relevant, and malformed bodies.
+- Reject unknown major protocol versions, duplicate/replayed IDs, oversized frames, invalid timestamps where relevant, and malformed bodies. `sentAt` and receipt `nextAlarmUtc` require fixed-width UTC seconds (`YYYY-MM-DDTHH:MM:SSZ`) with a real proleptic Gregorian date in years 0001–9999, valid clock fields, and no leap-second value (`:60`). JSON Schema's regex checks only shape; firmware, Python fixture mirror, and Dart contract gate also check calendar validity. This does not authenticate a timestamp or prove clock synchronization.
 - Envelope-level unknown fields are rejected for deterministic interoperability; operation bodies may evolve through explicit schema version updates.
 - `expectedRevision` is required for `schedule.preview` and `schedule.apply` to prevent lost updates. Applying a schedule is atomic.
 - External strings are length-limited and safely rendered; they are never commands.

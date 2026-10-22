@@ -516,6 +516,12 @@ void validator_reports_sync_receipt_violations() {
                   "event.syncReceipt"),
               dawn::MessageBodyCode::schema_invalid, "/nextAlarmUtc",
               "non-UTC nextAlarmUtc rejected");
+  expect_body(dawn::validate_protocol_message_body(
+                  parse_body("{\"appliedRevision\":1,\"alarmCount\":1,"
+                             "\"nextAlarmUtc\":\"2026-02-30T10:00:00Z\"}"),
+                  "event.syncReceipt"),
+              dawn::MessageBodyCode::schema_invalid, "/nextAlarmUtc",
+              "impossible calendar date in receipt rejected");
 }
 
 void validator_rejects_non_object_bodies() {
