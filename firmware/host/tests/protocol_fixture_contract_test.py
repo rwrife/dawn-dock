@@ -10,6 +10,7 @@ aligned with `docs/protocol.md` and the shared fixture manifest.
 
 from __future__ import annotations
 
+import datetime
 import json
 import re
 import sys
@@ -172,6 +173,18 @@ def _validate_error_response_body(body: dict[str, Any]) -> str | None:
     return None
 
 
+def _valid_utc_instant(value: Any) -> bool:
+    # ponytail: fixed-width UTC form rejects offsets/fractions; add them only
+    # with a versioned protocol change across all validators.
+    if not isinstance(value, str) or SENT_AT_PATTERN.fullmatch(value) is None:
+        return False
+    try:
+        datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+        return True
+    except ValueError:
+        return False
+
+
 def _validate_sync_receipt_body(body: dict[str, Any]) -> str | None:
     for key in ("appliedRevision", "alarmCount", "nextAlarmUtc"):
         if key not in body:
@@ -183,9 +196,7 @@ def _validate_sync_receipt_body(body: dict[str, Any]) -> str | None:
         return "schema_invalid"
     if count > MAX_STORED_ALARMS:
         return "payload_semantic_error"
-    if not isinstance(body["nextAlarmUtc"], str) or SENT_AT_PATTERN.match(
-        body["nextAlarmUtc"]
-    ) is None:
+    if not _valid_utc_instant(body["nextAlarmUtc"]):
         return "schema_invalid"
     return None
 
@@ -215,7 +226,7 @@ def validate_envelope(payload: dict[str, Any], fixture: str) -> str:
         return "invalid_message_id"
 
     sent_at = payload.get("sentAt")
-    if not isinstance(sent_at, str) or not SENT_AT_PATTERN.match(sent_at):
+    if not _valid_utc_instant(sent_at):
         return "invalid_sent_at"
 
     if msg_type in REVISION_REQUIRED_TYPES and "expectedRevision" not in payload:

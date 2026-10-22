@@ -104,6 +104,22 @@ void malformed_sent_at_and_unknown_protocol_are_rejected() {
          "protocol rejection reports invalid_protocol");
 }
 
+void impossible_calendar_dates_are_rejected() {
+  auto envelope = baseline_envelope();
+  for (std::string_view date : {"2026-02-30", "2025-02-29", "2026-04-31",
+                                "2026-13-01", "2026-00-01", "0000-01-01"}) {
+    envelope.sent_at_utc = std::string(date) + "T10:00:00Z";
+    expect(dawn::validate_protocol_envelope(envelope).code ==
+               dawn::ProtocolValidationCode::invalid_sent_at,
+           "impossible calendar date rejects as invalid_sent_at");
+  }
+  for (std::string_view date : {"2024-02-29", "2026-12-31"}) {
+    envelope.sent_at_utc = std::string(date) + "T23:59:59Z";
+    expect(dawn::validate_protocol_envelope(envelope).accepted,
+           "real calendar date remains accepted");
+  }
+}
+
 void invalid_message_id_and_oversize_frame_are_rejected() {
   auto envelope = baseline_envelope();
   envelope.message_id = "invalid id with spaces";
@@ -130,6 +146,7 @@ int main() {
   replay_window_rejects_duplicate_message_ids();
   replay_window_capacity_eviction_allows_old_id_after_rollover();
   malformed_sent_at_and_unknown_protocol_are_rejected();
+  impossible_calendar_dates_are_rejected();
   invalid_message_id_and_oversize_frame_are_rejected();
 
   if (failures != 0) {

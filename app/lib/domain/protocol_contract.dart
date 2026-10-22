@@ -89,6 +89,30 @@ final RegExp _messageIdPattern = RegExp(r'^[A-Za-z0-9._:-]{1,128}$');
 final RegExp _sentAtPattern = RegExp(
   r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$',
 );
+
+bool _validUtcInstant(String value) {
+  if (!_sentAtPattern.hasMatch(value)) return false;
+  final year = int.parse(value.substring(0, 4));
+  final month = int.parse(value.substring(5, 7));
+  final day = int.parse(value.substring(8, 10));
+  final hour = int.parse(value.substring(11, 13));
+  final minute = int.parse(value.substring(14, 16));
+  final second = int.parse(value.substring(17, 19));
+  if (year == 0 ||
+      month < 1 ||
+      month > 12 ||
+      hour > 23 ||
+      minute > 59 ||
+      second > 59) {
+    return false;
+  }
+  const daysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  final leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+  // ponytail: fixed UTC seconds only; expand with a versioned wire change.
+  return day >= 1 &&
+      day <= daysPerMonth[month - 1] + (month == 2 && leap ? 1 : 0);
+}
+
 final RegExp _alarmIdPattern = RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$');
 final RegExp _localTimePattern = RegExp(r'^([01][0-9]|2[0-3]):[0-5][0-9]$');
 
@@ -407,7 +431,7 @@ ContractCode _validateSyncReceiptBody(Map<Object?, Object?> body) {
     return ContractCode.payloadSemanticError;
   }
   final next = body['nextAlarmUtc'];
-  if (next is! String || !_sentAtPattern.hasMatch(next)) {
+  if (next is! String || !_validUtcInstant(next)) {
     return ContractCode.schemaInvalid;
   }
   return ContractCode.accepted;
@@ -438,7 +462,7 @@ ContractCode validateContractMessage(
     return ContractCode.duplicateMessageId;
   }
   final sentAt = payload['sentAt'];
-  if (sentAt is! String || !_sentAtPattern.hasMatch(sentAt)) {
+  if (sentAt is! String || !_validUtcInstant(sentAt)) {
     return ContractCode.invalidSentAt;
   }
   if (kRevisionRequiredTypes.contains(type) &&

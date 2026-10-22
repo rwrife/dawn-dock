@@ -56,6 +56,16 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-03 calendar-valid UTC protocol instants (parent #5/#6)
+
+The canonical fixture `invalid/invalid_sent_at_calendar_date.request.json`
+requires `invalid_sent_at` for February 30 despite a well-formed timestamp
+shape. Host firmware `protocol_service_tests`, `message_body_validator_tests`,
+`protocol_fixture_cross_language_tests`, and Python fixture mirror reject
+impossible Gregorian dates; Dart contract mirror uses the same calendar gate
+for `sentAt` and sync receipt `nextAlarmUtc`. Valid leap day and year-end
+probes pass. JSON Schema checks shape only. These are host/static contract
+tests, not authenticated transport, live clock synchronization, or target proof.
 
 ## CONN-03 schedule-flow controller evidence (issue #63)
 
