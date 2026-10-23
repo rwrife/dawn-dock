@@ -436,7 +436,7 @@ ProtocolMessageValidationResult validate_protocol_message(
     const ProtocolEnvelope &envelope, std::string_view body_json,
     ReplayWindow *replay_window) {
   const auto envelope_result =
-      validate_protocol_envelope(envelope, replay_window);
+      validate_protocol_envelope(envelope, replay_window, false);
   if (!envelope_result.accepted) {
     return ProtocolMessageValidationResult{
         .accepted = false,
@@ -479,6 +479,10 @@ ProtocolMessageValidationResult validate_protocol_message(
                     : "payload_semantic_error",
         .field_path = body_result.field_path,
     };
+  }
+  // Commit replay state only after the complete message has passed.
+  if (replay_window != nullptr) {
+    replay_window->remember(envelope.message_id);
   }
   return ProtocolMessageValidationResult{
       .accepted = true,

@@ -605,22 +605,36 @@ void composite_maps_body_failures_to_stable_strings() {
          "duplicate ids map to payload_semantic_error");
 }
 
-void composite_replay_window_follows_envelope_gate() {
+void composite_replay_window_commits_only_accepted_messages() {
   dawn::ReplayWindow replay(8);
   const auto envelope = baseline_envelope();
+  const std::string valid_body = "{\"alarms\":[]}";
 
-  // First send: envelope stage accepts (id remembered) but the body fails.
-  const auto first = dawn::validate_protocol_message(envelope, "{bad", &replay);
-  expect(!first.accepted && first.code == "schema_invalid",
-         "first send with bad body rejected");
+  for (const auto &bad_body : {"{bad", "{\"alarms\":{}}"}) {
+    const auto rejected =
+        dawn::validate_protocol_message(envelope, bad_body, &replay);
+    expect(!rejected.accepted && rejected.code == "schema_invalid",
+           "invalid body rejected without replay commit");
+    expect(!replay.contains(envelope.message_id),
+           "parse and schema failures do not consume id");
+  }
+  const auto semantic = dawn::validate_protocol_message(
+      envelope, "{\"alarms\":[" + valid_alarm_json("same") + "," +
+                    valid_alarm_json("same") + "]}",
+      &replay);
+  expect(!semantic.accepted && semantic.code == "payload_semantic_error" &&
+             !replay.contains(envelope.message_id),
+         "semantic failure does not consume id");
 
-  // Retry with a fresh body but the same id: the envelope gate now reports a
-  // replay, matching the documented retry-with-fresh-id contract.
-  const auto second =
-      dawn::validate_protocol_message(envelope, "{\"alarms\":[]}", &replay);
-  expect(!second.accepted && second.code == "duplicate_message_id" &&
-             second.retryable,
-         "same message id is remembered after envelope acceptance");
+  const auto accepted =
+      dawn::validate_protocol_message(envelope, valid_body, &replay);
+  expect(accepted.accepted && replay.contains(envelope.message_id),
+         "accepted message consumes id");
+  const auto duplicate =
+      dawn::validate_protocol_message(envelope, valid_body, &replay);
+  expect(!duplicate.accepted && duplicate.code == "duplicate_message_id" &&
+             duplicate.retryable,
+         "only accepted message blocks duplicate id");
 }
 
 }  // namespace
@@ -647,7 +661,7 @@ int main() {
   composite_maps_envelope_failures_to_stable_strings();
   composite_maps_parse_failures_to_schema_invalid();
   composite_maps_body_failures_to_stable_strings();
-  composite_replay_window_follows_envelope_gate();
+  composite_replay_window_commits_only_accepted_messages();
 
   if (failures != 0) {
     std::cerr << failures << " assertion(s) failed\n";
