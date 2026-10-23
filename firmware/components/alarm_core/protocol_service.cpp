@@ -98,7 +98,8 @@ void ReplayWindow::remember(std::string message_id) {
 }
 
 ProtocolValidationResult validate_protocol_envelope(
-    const ProtocolEnvelope& envelope, ReplayWindow* replay_window) {
+    const ProtocolEnvelope& envelope, ReplayWindow* replay_window,
+    bool remember_accepted) {
   if (envelope.protocol != "dawn-dock/1") {
     return {.code = ProtocolValidationCode::invalid_protocol,
             .accepted = false,
@@ -136,7 +137,7 @@ ProtocolValidationResult validate_protocol_envelope(
             .retryable = false};
   }
 
-  if (replay_window != nullptr) {
+  if (replay_window != nullptr && remember_accepted) {
     replay_window->remember(envelope.message_id);
   }
   return {.code = ProtocolValidationCode::accepted,

@@ -59,8 +59,12 @@ class ReplayWindow {
   std::unordered_set<std::string> set_;
 };
 
+// Set remember_accepted=false when a later body gate may still reject the
+// message. Caller must remember the ID after full acceptance; serialize this
+// check/commit with session dispatch once transport concurrency is introduced.
 [[nodiscard]] ProtocolValidationResult validate_protocol_envelope(
-    const ProtocolEnvelope& envelope, ReplayWindow* replay_window = nullptr);
+    const ProtocolEnvelope& envelope, ReplayWindow* replay_window = nullptr,
+    bool remember_accepted = true);
 
 [[nodiscard]] const char* to_string(ProtocolValidationCode code);
 
