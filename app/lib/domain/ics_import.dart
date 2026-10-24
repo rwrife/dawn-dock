@@ -147,9 +147,9 @@ const String kIcsNoticeMalformedEvent = 'malformed-event';
 /// events in file order were not suggested.
 const String kIcsNoticeCapacityTruncated = 'capacity-truncated';
 
-/// The `RRULE` uses a frequency or part (`MONTHLY`, `YEARLY`, `BYSETPOS`,
-/// unknown parts, values a weekday mask cannot model) that is unsupported;
-/// the event was dropped.
+/// `RRULE` uses a frequency or part (`MONTHLY`, `YEARLY`, `BYSETPOS`,
+/// ordinal BYDAY like `-1MO`, unknown parts, values a weekday mask cannot
+/// model) that is unsupported; the event was dropped.
 const String kIcsNoticeUnsupportedRecurrence = 'unsupported-recurrence';
 
 /// The `DTSTART` had a `TZID` parameter whose value was empty; the event was
@@ -775,11 +775,14 @@ Set<int>? _daysFromRrule({
       case 'BYDAY':
         bydaySeen = true;
         for (final token in value.split(',')) {
-          final iso = _bydayToIso[_stripBydayOrdinal(token).toUpperCase()];
+          final iso = _bydayToIso[token.trim().toUpperCase()];
           if (iso == null) {
+            // Ordinal tokens (`-1MO`, `+3TU`) mean nth-weekday-of-period;
+            // a weekday mask cannot express that, so they are rejected
+            // here rather than widened to every such weekday.
             onNotice(
               kIcsNoticeUnsupportedRecurrence,
-              detail: 'unknown BYDAY day "$token"',
+              detail: 'unsupported BYDAY token "$token"',
             );
             return null;
           }
@@ -824,15 +827,6 @@ Set<int>? _daysFromRrule({
       );
       return null;
   }
-}
-
-/// Strips an optional RFC 5545 ordinal prefix (`+3TU`, `-1MO`) from a BYDAY
-/// token — nth-weekday semantics are already rejected via BYSETPOS-style
-/// unsupportedness, but plain ordinals also occur without BYSETPOS.
-String _stripBydayOrdinal(String token) {
-  final trimmed = token.trim();
-  final match = RegExp(r'^[+-]?\d*([A-Za-z]{2})$').firstMatch(trimmed);
-  return match == null ? trimmed : match.group(1)!;
 }
 
 bool _isIcsInstant(String value) =>

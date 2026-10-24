@@ -332,14 +332,64 @@ void main() {
       expect(onlySuggestion(result).days, {1, 3, 5});
     });
 
-    test('BYDAY ordinals and lowercase are tolerated', () {
+    test('plain lowercase BYDAY is case-insensitive', () {
       final result = importOne([
-        'UID:rr-ord',
+        'UID:rr-lower',
         'DTSTART;TZID=America/New_York:20260901T070000',
-        'RRULE:FREQ=WEEKLY;BYDAY=+3tu,-1MO',
+        'RRULE:FREQ=WEEKLY;BYDAY=tu,mo',
       ]);
       expect(onlySuggestion(result).days, {1, 2});
     });
+
+    test('ordinal BYDAY never expands nth-weekday into every weekday', () {
+      for (final rrule in [
+        'FREQ=WEEKLY;BYDAY=+3tu,-1MO',
+        'FREQ=WEEKLY;BYDAY=MO,-1FR',
+        'FREQ=DAILY;BYDAY=2TU',
+        'FREQ=WEEKLY;BYDAY=0MO',
+      ]) {
+        final result = importOne([
+          'UID:rr-ord',
+          'DTSTART;TZID=America/New_York:20260901T070000',
+          'RRULE:$rrule',
+        ]);
+        expect(result.suggestions, isEmpty, reason: rrule);
+        expect(
+          codes(result),
+          contains(kIcsNoticeUnsupportedRecurrence),
+          reason: rrule,
+        );
+      }
+    });
+
+    test(
+      'unsupported ordinal drops only its event, not unrelated suggestions',
+      () {
+        final result = runImport(
+          wrap([
+            vevent([
+              'UID:ordinal',
+              'DTSTART:20260901T070000',
+              'RRULE:FREQ=WEEKLY;BYDAY=-1MO',
+            ]),
+            vevent([
+              'UID:plain',
+              'DTSTART:20260901T080000',
+              'RRULE:FREQ=WEEKLY;BYDAY=MO',
+            ]),
+          ]),
+        );
+        expect(result.suggestions, hasLength(1));
+        expect(result.suggestions.single.provenance?.sourceEventId, 'plain');
+        expect(
+          result.notices.any(
+            (n) =>
+                n.code == kIcsNoticeUnsupportedRecurrence && n.eventNumber == 1,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('WEEKLY without BYDAY uses the event weekday with a notice', () {
       final result = importOne([
