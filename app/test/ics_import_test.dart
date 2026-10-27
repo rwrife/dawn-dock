@@ -323,6 +323,37 @@ void main() {
       expect(codes(result), isNot(contains(kIcsNoticeSingleOccurrenceWeekly)));
     });
 
+    test('DAILY;BYDAY filters days rather than widening to every day', () {
+      final result = importOne([
+        'UID:rr-daily-weekdays',
+        'DTSTART;TZID=America/New_York:20260901T070000',
+        'RRULE:FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR',
+      ]);
+      expect(onlySuggestion(result).days, {1, 2, 3, 4, 5});
+      expect(codes(result), isNot(contains(kIcsNoticeUnsupportedRecurrence)));
+    });
+
+    test('DAILY;BYDAY=SU retains Sunday only', () {
+      final result = importOne([
+        'UID:rr-daily-sunday',
+        'DTSTART;TZID=America/New_York:20260901T070000',
+        'RRULE:FREQ=DAILY;BYDAY=SU',
+      ]);
+      expect(onlySuggestion(result).days, {7});
+    });
+
+    test('empty BYDAY drops event instead of creating an empty-day alarm', () {
+      for (final freq in ['DAILY', 'WEEKLY']) {
+        final result = importOne([
+          'UID:rr-empty-$freq',
+          'DTSTART;TZID=America/New_York:20260901T070000',
+          'RRULE:FREQ=$freq;BYDAY=',
+        ]);
+        expect(result.suggestions, isEmpty);
+        expect(codes(result), contains(kIcsNoticeUnsupportedRecurrence));
+      }
+    });
+
     test('WEEKLY with BYDAY maps each named day', () {
       final result = importOne([
         'UID:rr-weekly',
