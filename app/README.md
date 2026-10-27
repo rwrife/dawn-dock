@@ -121,13 +121,12 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   framing, cancel, same-process route recreation, and narrow 200% text layout.
   Framed requests are not delivered, and no token or receipt was received.
   App transport, device execution, and physical assistive testing remain open.
-- `ics_import.dart` maps selected-file calendar events to review-only alarm
-  suggestions. Plain weekly `BYDAY` weekdays remain case-insensitive; ordinal
-  `BYDAY` tokens (for example `-1MO`), including mixed lists, now drop only
-  the affected event with an `unsupported-recurrence` notice. A weekday mask
-  cannot represent nth-weekday recurrence; silently stripping the ordinal
-  would create extra alarms. Host tests cover this fail-closed boundary; no
-  real calendar account or physical platform import is claimed.
+- `ics_import.dart` maps calendar text to review-only alarm suggestions.
+  `DAILY;BYDAY` and `WEEKLY;BYDAY` both retain only listed weekdays; empty or
+  ordinal `BYDAY` tokens (for example `-1MO`) drop the affected event with an
+  `unsupported-recurrence` notice. A weekday mask cannot represent nth-weekday
+  recurrence; ignoring a filter would create extra alarms. Host tests cover
+  this boundary; no real calendar account or physical file import is claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next

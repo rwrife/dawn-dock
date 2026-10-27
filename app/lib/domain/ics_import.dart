@@ -773,6 +773,10 @@ Set<int>? _daysFromRrule({
         }
         untilSeen = true;
       case 'BYDAY':
+        if (value.isEmpty) {
+          onNotice(kIcsNoticeUnsupportedRecurrence, detail: 'empty BYDAY');
+          return null;
+        }
         bydaySeen = true;
         for (final token in value.split(',')) {
           final iso = _bydayToIso[token.trim().toUpperCase()];
@@ -811,7 +815,9 @@ Set<int>? _daysFromRrule({
 
   switch (freq) {
     case 'DAILY':
-      return {1, 2, 3, 4, 5, 6, 7};
+      // DAILY;BYDAY filters occurrences too. Ignoring BYDAY would create
+      // alarms on dates excluded by the source calendar.
+      return bydaySeen ? byDays : {1, 2, 3, 4, 5, 6, 7};
     case 'WEEKLY':
       if (bydaySeen) {
         return byDays;
