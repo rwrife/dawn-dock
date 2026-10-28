@@ -473,12 +473,6 @@ AlarmDraft? _draftForEvent(
     note(kIcsNoticeMalformedEvent);
     return null;
   }
-  if (block.rruleValues.length > 1) {
-    // RFC 5545 forbids multiple RRULEs per component; the extras are dropped
-    // and the judgment is surfaced as a recurrence-end judgment.
-    note(kIcsNoticeRecurrenceEndDropped, detail: 'multiple RRULE properties');
-  }
-
   final uid = block.uid;
   if (uid == null || uid.isEmpty) {
     note(kIcsNoticeMissingUid);
@@ -726,10 +720,12 @@ Set<int>? _daysFromRrule({
   var untilSeen = false;
   final byDays = <int>{};
   var bydaySeen = false;
+  final seenKeys = <String>{};
 
   for (final part in rruleValue.split(';')) {
     if (part.isEmpty) {
-      continue;
+      onNotice(kIcsNoticeUnsupportedRecurrence, detail: 'empty RRULE segment');
+      return null;
     }
     final eq = part.indexOf('=');
     if (eq <= 0) {
@@ -740,6 +736,13 @@ Set<int>? _daysFromRrule({
       return null;
     }
     final key = part.substring(0, eq).toUpperCase();
+    if (!seenKeys.add(key)) {
+      onNotice(
+        kIcsNoticeUnsupportedRecurrence,
+        detail: 'duplicate RRULE key "$key"',
+      );
+      return null;
+    }
     final value = part.substring(eq + 1);
     switch (key) {
       case 'FREQ':

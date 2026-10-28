@@ -422,6 +422,63 @@ void main() {
       },
     );
 
+    test('duplicate RRULE keys reject only their own event', () {
+      for (final rule in [
+        'FREQ=WEEKLY;FREQ=DAILY;BYDAY=MO',
+        'FREQ=WEEKLY;BYDAY=MO;BYDAY=FR',
+        'FREQ=WEEKLY;INTERVAL=2;INTERVAL=1;BYDAY=MO',
+        'FREQ=WEEKLY;COUNT=2;COUNT=3;BYDAY=MO',
+        'FREQ=WEEKLY;UNTIL=20261201;UNTIL=20261202;BYDAY=MO',
+        'freq=weekly;FREQ=DAILY;BYDAY=MO',
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent(['UID:bad', 'DTSTART:20260901T070000', 'RRULE:$rule']),
+            vevent([
+              'UID:good',
+              'DTSTART:20260901T080000',
+              'RRULE:FREQ=WEEKLY;BYDAY=TU',
+            ]),
+          ]),
+        );
+        expect(result.suggestions, hasLength(1), reason: rule);
+        expect(result.suggestions.single.provenance?.sourceEventId, 'good');
+        expect(result.suggestions.single.days, {2});
+        expect(
+          result.notices.any(
+            (n) =>
+                n.code == kIcsNoticeUnsupportedRecurrence && n.eventNumber == 1,
+          ),
+          isTrue,
+          reason: rule,
+        );
+      }
+    });
+
+    test('empty RRULE segments and BYDAY tokens reject the event', () {
+      for (final rule in [
+        'FREQ=WEEKLY;;BYDAY=MO',
+        ';FREQ=WEEKLY;BYDAY=MO',
+        'FREQ=WEEKLY;BYDAY=MO;',
+        'FREQ=WEEKLY;BYDAY=',
+        'FREQ=DAILY;BYDAY=,MO',
+        'FREQ=WEEKLY;BYDAY=MO,',
+        'FREQ=WEEKLY;BYDAY=MO,,FR',
+      ]) {
+        final result = importOne([
+          'UID:bad',
+          'DTSTART:20260901T070000',
+          'RRULE:$rule',
+        ]);
+        expect(result.suggestions, isEmpty, reason: rule);
+        expect(
+          codes(result),
+          contains(kIcsNoticeUnsupportedRecurrence),
+          reason: rule,
+        );
+      }
+    });
+
     test('WEEKLY without BYDAY uses the event weekday with a notice', () {
       final result = importOne([
         'UID:rr-weekly-nobday',
