@@ -124,7 +124,7 @@ Host-only local-data erase coordination now removes the caller-owned backup file
 2. **Component validation complete for schematic capture** — selected architecture, pin/resource allocation, dated sourcing snapshot, and evidence gaps are documented.
 3. **Editable carrier schematic complete** — native ERC 0 errors/0 warnings, analyzer evidence, critical pin mapping, and KiCad-derived BOM are committed.
 4. Continue the firmware from the tested occurrence and dual-slot storage cores into recurrence/timezone, ESP-IDF NVS integration, and hardware abstractions while Rev A0 fabrication holds remain open.
-5. Continue open issue #6 from the fake-only companion bootstrap into reviewed pairing, persistence, calendar, and authenticated protocol integration.
+5. Continue open issue #6 from the fake-only companion bootstrap into reviewed pairing, persistence, calendar, and authenticated protocol integration. Host-tested ICS suggestions now reject repeated RRULE keys and empty recurrence segments/tokens without affecting other events; platform file import and device integration remain open.
 6. Integrate, assemble, measure, troubleshoot, and publish fabrication/release evidence.
 
 See [PLAN.md](PLAN.md), [hardware/requirements.md](hardware/requirements.md), and the issue backlog.
