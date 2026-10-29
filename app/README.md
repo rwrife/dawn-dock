@@ -125,10 +125,13 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   `DAILY;BYDAY` and `WEEKLY;BYDAY` both retain only listed weekdays; empty or
   ordinal `BYDAY` tokens (for example `-1MO`), empty segments, and duplicate
   RRULE keys drop the affected event with an `unsupported-recurrence` notice.
-  A weekday mask cannot represent nth-weekday recurrence or ambiguous
-  recurrence parts; ignoring malformed tokens would create extra alarms.
-  Host tests cover these boundaries; no real calendar account or physical
-  file import is claimed.
+  `EXDATE` drops its event with an `excluded-dates` notice; excluded instants
+  are not retained. A weekday mask cannot represent per-date exclusions,
+  nth-weekday recurrence, or ambiguous recurrence parts; ignoring them would
+  create extra alarms. Other exception/override forms (`RDATE`, `EXRULE`,
+  `RECURRENCE-ID`) remain unsupported, not validated by this gate. Host tests
+  cover these boundaries; no real calendar account or physical file import is
+  claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next

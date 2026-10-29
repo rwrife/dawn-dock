@@ -161,6 +161,10 @@ const String kIcsNoticeMissingTzid = 'missing-tzid';
 /// UTC".
 const String kIcsNoticeUtcTimezoneId = 'utc-timezone-id';
 
+/// An EXDATE exclusion cannot be represented by a weekday mask. The whole
+/// event was dropped; exclusion values are never retained in notices.
+const String kIcsNoticeExcludedDates = 'excluded-dates';
+
 /// Stable lowercase identifiers for every notice this importer can emit.
 const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeFloatingLocalTime,
@@ -180,6 +184,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeUnsupportedRecurrence,
   kIcsNoticeMissingTzid,
   kIcsNoticeUtcTimezoneId,
+  kIcsNoticeExcludedDates,
 ];
 
 /// Outcome of one import: suggestions in file order plus every notice, in
@@ -383,6 +388,7 @@ String _unescapeText(String value) {
 
 class _EventBlock {
   bool malformed = false;
+  bool hasExcludedDates = false;
   String? uid;
   String? summary;
   _Property? dtstart;
@@ -444,6 +450,8 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
         } else {
           open.rruleValues.add(prop.rawValue);
         }
+      case 'EXDATE':
+        open.hasExcludedDates = true;
       default:
         break; // DESCRIPTION / ATTENDEE / LOCATION / ... : no field, no leak
     }
@@ -471,6 +479,10 @@ AlarmDraft? _draftForEvent(
 
   if (block.malformed) {
     note(kIcsNoticeMalformedEvent);
+    return null;
+  }
+  if (block.hasExcludedDates) {
+    note(kIcsNoticeExcludedDates);
     return null;
   }
   final uid = block.uid;
