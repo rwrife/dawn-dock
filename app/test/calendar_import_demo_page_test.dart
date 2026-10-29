@@ -71,6 +71,32 @@ void main() {
     );
   });
 
+  testWidgets('excluded event shows a plain-language notice, not an alarm', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(find.byKey(const ValueKey('calendar-input')), '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:blocked
+SUMMARY:Should not ring
+DTSTART:20260901T070000
+RRULE:FREQ=DAILY
+EXDATE:20260907T070000
+END:VEVENT
+END:VCALENDAR''');
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(find.textContaining('Event has excluded dates'), findsOneWidget);
+    expect(find.text('Should not ring'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('invalid input cannot confirm; edits invalidate review', (
     tester,
   ) async {

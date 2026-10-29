@@ -304,6 +304,42 @@ void main() {
   });
 
   group('recurrence mapping', () {
+    test('EXDATE drops recurring event without leaking excluded dates', () {
+      for (final exclusions in [
+        ['EXDATE;TZID=America/New_York:20260907T070000'],
+        ['exdate:20260907T110000Z,20260914T110000Z', 'EXDATE:20260921T110000Z'],
+        ['EXDATE:'],
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent([
+              'UID:excluded',
+              'DTSTART;TZID=America/New_York:20260901T070000',
+              'RRULE:FREQ=WEEKLY;BYDAY=MO',
+              ...exclusions,
+            ]),
+            vevent([
+              'UID:independent',
+              'DTSTART:20260901T080000',
+              'RRULE:FREQ=WEEKLY;BYDAY=TU',
+            ]),
+          ]),
+        );
+        expect(result.suggestions, hasLength(1));
+        expect(
+          result.suggestions.single.provenance?.sourceEventId,
+          'independent',
+        );
+        expect(
+          result.notices.where((n) => n.code == kIcsNoticeExcludedDates),
+          hasLength(1),
+        );
+        expect(result.notices.first.eventNumber, 1);
+        expect(result.notices.first.detail, isNull);
+        expect(result.notices.toString(), isNot(contains('20260907')));
+      }
+    });
+
     test('no RRULE expands weekly on the event weekday with a notice', () {
       final result = importOne([
         'UID:rr-none',

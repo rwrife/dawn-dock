@@ -209,6 +209,8 @@ const _noticeText = <String, String>{
   kIcsNoticeCapacityTruncated:
       'Suggestion limit reached; later events dropped.',
   kIcsNoticeUnsupportedRecurrence: 'Unsupported recurrence; event dropped.',
+  kIcsNoticeExcludedDates:
+      'Event has excluded dates; cannot safely repeat it as an alarm.',
   kIcsNoticeMissingTzid: 'Empty timezone; event dropped.',
   kIcsNoticeUtcTimezoneId: 'UTC timezone designator; verify local intent.',
 };
