@@ -75,7 +75,9 @@ void main() {
     tester,
   ) async {
     await _pumpTallPage(tester);
-    await tester.enterText(find.byKey(const ValueKey('calendar-input')), '''BEGIN:VCALENDAR
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
 BEGIN:VEVENT
 UID:blocked
 SUMMARY:Should not ring
@@ -83,7 +85,8 @@ DTSTART:20260901T070000
 RRULE:FREQ=DAILY
 EXDATE:20260907T070000
 END:VEVENT
-END:VCALENDAR''');
+END:VCALENDAR''',
+    );
     await tester.tap(find.text('Review calendar suggestions'));
     await tester.pumpAndSettle();
     expect(find.textContaining('0 suggestions for review'), findsOneWidget);
