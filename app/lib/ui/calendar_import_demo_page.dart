@@ -211,6 +211,8 @@ const _noticeText = <String, String>{
   kIcsNoticeUnsupportedRecurrence: 'Unsupported recurrence; event dropped.',
   kIcsNoticeExcludedDates:
       'Event has excluded dates; cannot safely repeat it as an alarm.',
+  kIcsNoticeUnsupportedRecurrenceException:
+      'Unsupported recurrence additions or exclusions; event dropped.',
   kIcsNoticeMissingTzid: 'Empty timezone; event dropped.',
   kIcsNoticeUtcTimezoneId: 'UTC timezone designator; verify local intent.',
 };

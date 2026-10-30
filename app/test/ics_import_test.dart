@@ -304,6 +304,40 @@ void main() {
   });
 
   group('recurrence mapping', () {
+    test(
+      'RDATE and EXRULE drop only affected events without leaking values',
+      () {
+        for (final exception in [
+          'RDATE;TZID=America/New_York:20260907T070000',
+          'rdate:20260907T110000Z,20260914T110000Z',
+          'RDATE:',
+          'EXRULE:FREQ=WEEKLY;BYDAY=MO',
+          'exrule:',
+        ]) {
+          final result = runImport(
+            wrap([
+              vevent([
+                'UID:blocked',
+                'DTSTART:20260901T070000',
+                'RRULE:FREQ=DAILY',
+                exception,
+              ]),
+              vevent(['UID:neighbor', 'DTSTART:20260901T080000']),
+            ]),
+          );
+          expect(result.suggestions, hasLength(1), reason: exception);
+          expect(
+            result.suggestions.single.provenance?.sourceEventId,
+            'neighbor',
+          );
+          expect(result.notices.first.code, 'unsupported-recurrence-exception');
+          expect(result.notices.first.eventNumber, 1);
+          expect(result.notices.first.detail, isNull);
+          expect(result.notices.toString(), isNot(contains('20260907')));
+        }
+      },
+    );
+
     test('EXDATE drops recurring event without leaking excluded dates', () {
       for (final exclusions in [
         ['EXDATE;TZID=America/New_York:20260907T070000'],
