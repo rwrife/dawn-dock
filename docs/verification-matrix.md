@@ -56,6 +56,17 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS recurrence-addition/exclusion gate (issue #96, parent #6)
+
+Host `app/test/ics_import_test.dart` covers `RDATE` (including timezone
+parameters, comma-separated values, empty values, and mixed case) and `EXRULE`
+(including empty values). Affected VEVENTs yield one event-numbered
+`unsupported-recurrence-exception` notice without exception values; valid
+neighbors remain reviewable. Host widget test checks plain-language rejection
+and disabled confirmation. This is host software evidence only. `RECURRENCE-ID`
+override reconciliation, platform file import, authenticated transport, target
+alarm execution, and physical verification remain open; parent #6 stays open.
+
 ## CONN-05 ICS excluded-date gate (issue #94, parent #6)
 
 Host `app/test/ics_import_test.dart` covers `EXDATE` with TZID, comma-separated
@@ -63,8 +74,9 @@ UTC instants, repeated mixed-case properties, and an empty exclusion value.
 Each affected VEVENT is dropped with one `excluded-dates` notice carrying its
 file-order number but no exclusion dates; unaffected neighboring events remain
 reviewable. This is software-model evidence, not real calendar import,
-authenticated transport, or physical alarm execution. `RDATE`, `EXRULE`, and
-`RECURRENCE-ID` reconciliation remain unsupported; parent #6 stays open.
+authenticated transport, or physical alarm execution. `RDATE` and `EXRULE`
+are separately rejected by issue #96; `RECURRENCE-ID` reconciliation remains
+unsupported. Parent #6 stays open.
 
 ## CONN-05 ICS RRULE ambiguity gate (issue #92, parent #6)
 

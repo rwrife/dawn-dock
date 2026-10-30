@@ -165,6 +165,11 @@ const String kIcsNoticeUtcTimezoneId = 'utc-timezone-id';
 /// event was dropped; exclusion values are never retained in notices.
 const String kIcsNoticeExcludedDates = 'excluded-dates';
 
+/// RDATE additions and EXRULE exclusions cannot be represented by a weekday
+/// mask. Their values are discarded; the affected event is not suggested.
+const String kIcsNoticeUnsupportedRecurrenceException =
+    'unsupported-recurrence-exception';
+
 /// Stable lowercase identifiers for every notice this importer can emit.
 const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeFloatingLocalTime,
@@ -185,6 +190,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeMissingTzid,
   kIcsNoticeUtcTimezoneId,
   kIcsNoticeExcludedDates,
+  kIcsNoticeUnsupportedRecurrenceException,
 ];
 
 /// Outcome of one import: suggestions in file order plus every notice, in
@@ -389,6 +395,7 @@ String _unescapeText(String value) {
 class _EventBlock {
   bool malformed = false;
   bool hasExcludedDates = false;
+  bool hasUnsupportedRecurrenceException = false;
   String? uid;
   String? summary;
   _Property? dtstart;
@@ -452,6 +459,9 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
         }
       case 'EXDATE':
         open.hasExcludedDates = true;
+      case 'RDATE':
+      case 'EXRULE':
+        open.hasUnsupportedRecurrenceException = true;
       default:
         break; // DESCRIPTION / ATTENDEE / LOCATION / ... : no field, no leak
     }
@@ -483,6 +493,10 @@ AlarmDraft? _draftForEvent(
   }
   if (block.hasExcludedDates) {
     note(kIcsNoticeExcludedDates);
+    return null;
+  }
+  if (block.hasUnsupportedRecurrenceException) {
+    note(kIcsNoticeUnsupportedRecurrenceException);
     return null;
   }
   final uid = block.uid;
