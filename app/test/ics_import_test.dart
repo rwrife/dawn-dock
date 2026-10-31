@@ -568,25 +568,43 @@ void main() {
       expect(onlySuggestion(result).days, {1, 2, 3, 4, 5, 6, 7});
     });
 
-    test('COUNT and UNTIL are dropped with a recurrence-end notice', () {
-      for (final rrule in [
-        'FREQ=WEEKLY;BYDAY=MO;COUNT=5',
-        'FREQ=WEEKLY;BYDAY=MO;UNTIL=20261201T000000Z',
-        'FREQ=WEEKLY;BYDAY=MO;UNTIL=20261201',
-      ]) {
-        final result = importOne([
-          'UID:rr-end-$rrule',
-          'DTSTART;TZID=America/New_York:20260901T070000',
-          'RRULE:$rrule',
-        ]);
-        expect(onlySuggestion(result).days, {1}, reason: rrule);
-        expect(
-          codes(result),
-          contains(kIcsNoticeRecurrenceEndDropped),
-          reason: rrule,
-        );
-      }
-    });
+    test(
+      'COUNT and UNTIL reject bounded recurrence instead of repeating forever',
+      () {
+        for (final rrule in [
+          'FREQ=WEEKLY;BYDAY=MO;COUNT=5',
+          'FREQ=WEEKLY;BYDAY=MO;COUNT=1',
+          'FREQ=WEEKLY;BYDAY=MO;UNTIL=20261201T000000Z',
+          'FREQ=WEEKLY;BYDAY=MO;UNTIL=20261201',
+          'FREQ=DAILY;BYDAY=MO;COUNT=2',
+        ]) {
+          final result = runImport(
+            wrap([
+              vevent([
+                'UID:rr-end-$rrule',
+                'DTSTART;TZID=America/New_York:20260901T070000',
+                'RRULE:$rrule',
+              ]),
+              vevent([
+                'UID:neighbor',
+                'DTSTART;TZID=America/New_York:20260901T080000',
+                'RRULE:FREQ=WEEKLY;BYDAY=TU',
+              ]),
+            ]),
+          );
+          expect(result.suggestions, hasLength(1), reason: rrule);
+          expect(
+            result.suggestions.single.provenance?.sourceEventId,
+            'neighbor',
+          );
+          expect(
+            result.notices.where((n) => n.eventNumber == 1).map((n) => n.code),
+            contains(kIcsNoticeBoundedRecurrenceUnsupported),
+            reason: rrule,
+          );
+        }
+      },
+    );
 
     test('INTERVAL other than 1 drops as interval-not-representable', () {
       for (final value in ['2', '0', '-1', 'abc']) {
@@ -1104,7 +1122,8 @@ void main() {
           ]),
         ]),
       );
-      expect(result.suggestions, hasLength(3));
+      expect(result.suggestions, hasLength(2));
+      expect(codes(result), contains(kIcsNoticeBoundedRecurrenceUnsupported));
       for (final draft in result.suggestions) {
         expect(AlarmDraft.fromMap(draft.toMap()), draft);
       }

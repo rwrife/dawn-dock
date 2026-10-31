@@ -109,9 +109,10 @@ const String kIcsNoticeAllDayDefaultTime = 'all-day-default-time';
 /// weekday mask; the event was dropped.
 const String kIcsNoticeIntervalNotRepresentable = 'interval-not-representable';
 
-/// The recurrence carried an end condition (`COUNT`/`UNTIL`) that a weekday
-/// mask cannot express; the end was dropped from the suggestion.
-const String kIcsNoticeRecurrenceEndDropped = 'recurrence-end-dropped';
+/// A `COUNT`/`UNTIL` end cannot be represented by a repeating weekday mask;
+/// the event was dropped rather than suggesting an alarm that never ends.
+const String kIcsNoticeBoundedRecurrenceUnsupported =
+    'bounded-recurrence-unsupported';
 
 /// A `WEEKLY` rule with no `BYDAY`/`COUNT`/`UNTIL` was expanded to recur on
 /// the event's own weekday forever.
@@ -176,7 +177,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeUtcWallTime,
   kIcsNoticeAllDayDefaultTime,
   kIcsNoticeIntervalNotRepresentable,
-  kIcsNoticeRecurrenceEndDropped,
+  kIcsNoticeBoundedRecurrenceUnsupported,
   kIcsNoticeSingleOccurrenceWeekly,
   kIcsNoticeLabelDefaulted,
   kIcsNoticeLabelTruncated,
@@ -742,8 +743,7 @@ Set<int>? _daysFromRrule({
 
   String? freq;
   var interval = 1;
-  var countSeen = false;
-  var untilSeen = false;
+  var bounded = false;
   final byDays = <int>{};
   var bydaySeen = false;
   final seenKeys = <String>{};
@@ -791,7 +791,7 @@ Set<int>? _daysFromRrule({
           );
           return null;
         }
-        countSeen = true;
+        bounded = true;
       case 'UNTIL':
         if (!_isIcsInstant(value)) {
           onNotice(
@@ -800,7 +800,7 @@ Set<int>? _daysFromRrule({
           );
           return null;
         }
-        untilSeen = true;
+        bounded = true;
       case 'BYDAY':
         if (value.isEmpty) {
           onNotice(kIcsNoticeUnsupportedRecurrence, detail: 'empty BYDAY');
@@ -838,8 +838,9 @@ Set<int>? _daysFromRrule({
     onNotice(kIcsNoticeIntervalNotRepresentable, detail: 'INTERVAL=$interval');
     return null;
   }
-  if (countSeen || untilSeen) {
-    onNotice(kIcsNoticeRecurrenceEndDropped);
+  if (bounded) {
+    onNotice(kIcsNoticeBoundedRecurrenceUnsupported);
+    return null;
   }
 
   switch (freq) {
