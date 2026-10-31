@@ -195,8 +195,8 @@ const _noticeText = <String, String>{
   kIcsNoticeAllDayDefaultTime: 'All-day event defaulted to midnight.',
   kIcsNoticeIntervalNotRepresentable:
       'Unsupported recurrence interval; event dropped.',
-  kIcsNoticeRecurrenceEndDropped:
-      'Recurrence end was dropped; suggestion repeats indefinitely.',
+  kIcsNoticeBoundedRecurrenceUnsupported:
+      'Calendar recurrence ends; event dropped rather than repeating forever.',
   kIcsNoticeSingleOccurrenceWeekly:
       'Single occurrence expanded to repeat weekly.',
   kIcsNoticeLabelDefaulted: 'Missing title replaced with generic label.',

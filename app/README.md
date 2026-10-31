@@ -128,11 +128,14 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   `EXDATE` drops its event with an `excluded-dates` notice; excluded instants
   are not retained. A weekday mask cannot represent per-date exclusions,
   nth-weekday recurrence, or ambiguous recurrence parts; ignoring them would
-  create extra alarms. `RDATE` and `EXRULE` now drop affected events with an
-  `unsupported-recurrence-exception` notice without retaining their values;
-  neighboring events remain reviewable. `RECURRENCE-ID` overrides remain
-  unsupported and unreconciled. Host tests cover these boundaries; no real
-  calendar account, platform file import, or physical alarm test is claimed.
+  create extra alarms. `RDATE` and `EXRULE` drop affected events with an
+  `unsupported-recurrence-exception` notice without retaining their values.
+  `COUNT` and `UNTIL` bounded recurrence conditions cannot be represented by
+  indefinitely repeating weekday alarms; affected events are dropped with a
+  `bounded-recurrence-unsupported` notice rather than repeating forever.
+  `RECURRENCE-ID` overrides remain unsupported and unreconciled. Host tests cover
+  these boundaries; no real calendar account, platform file import, or physical
+  alarm test is claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next

@@ -104,6 +104,34 @@ END:VCALENDAR''',
     },
   );
 
+  testWidgets('bounded recurrence cannot be confirmed as endless alarm', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:bounded
+SUMMARY:Temporary event
+DTSTART:20260901T070000
+RRULE:FREQ=DAILY;COUNT=2
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(find.textContaining('Calendar recurrence ends'), findsOneWidget);
+    expect(find.text('Temporary event'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('excluded event shows a plain-language notice, not an alarm', (
     tester,
   ) async {

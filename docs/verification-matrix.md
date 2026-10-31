@@ -56,6 +56,17 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS bounded-recurrence gate (parent #6)
+
+Host `app/test/ics_import_test.dart` rejects `COUNT` and `UNTIL` conditions
+with an event-numbered `bounded-recurrence-unsupported` notice; neighboring
+unbounded events remain reviewable. Host widget test shows plain-language
+rejection and disables confirmation when no suggestions remain. A fixed weekly
+alarm cannot preserve a source event's end condition; dropping the event avoids
+unintended alarms after the source recurrence expires. This is host software
+model evidence only. Platform file selection, real recurrence normalization,
+authenticated transport, physical alarm execution, and parent #6 remain open.
+
 ## CONN-05 ICS recurrence-addition/exclusion gate (issue #96, parent #6)
 
 Host `app/test/ics_import_test.dart` covers `RDATE` (including timezone
