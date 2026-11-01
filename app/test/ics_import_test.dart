@@ -305,6 +305,68 @@ void main() {
 
   group('recurrence mapping', () {
     test(
+      'detached override rejects every matching UID regardless of order',
+      () {
+        for (final firstIsOverride in [true, false]) {
+          final master = vevent([
+            'UID:shared',
+            'SUMMARY:Master must not ring',
+            'DTSTART:20260901T070000',
+            'RRULE:FREQ=DAILY',
+          ]);
+          final override = vevent([
+            'UID:shared',
+            'SUMMARY:Override must not ring',
+            'DTSTART:20260902T080000',
+            'RECURRENCE-ID;TZID=America/New_York:20260902T070000',
+          ]);
+          final result = runImport(
+            wrap([
+              if (firstIsOverride) override else master,
+              vevent(['UID:neighbor', 'DTSTART:20260901T090000']),
+              if (firstIsOverride) master else override,
+            ]),
+          );
+          expect(result.suggestions, hasLength(1));
+          expect(
+            result.suggestions.single.provenance?.sourceEventId,
+            'neighbor',
+          );
+          expect(
+            result.notices
+                .where((n) => n.code == kIcsNoticeRecurrenceOverride)
+                .map((n) => n.eventNumber),
+            [1, 3],
+          );
+          expect(result.notices.toString(), isNot(contains('20260902')));
+        }
+      },
+    );
+
+    test('standalone canceled and empty detached overrides are dropped', () {
+      for (final id in [
+        'RECURRENCE-ID:20260901T070000',
+        'recurrence-id;VALUE=DATE:',
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent([
+              'UID:cancelled',
+              'DTSTART:20260901T070000',
+              'STATUS:CANCELLED',
+              id,
+            ]),
+            vevent(['UID:good', 'DTSTART:20260901T080000']),
+          ]),
+        );
+        expect(result.suggestions.single.provenance?.sourceEventId, 'good');
+        expect(result.notices.first.code, kIcsNoticeRecurrenceOverride);
+        expect(result.notices.first.eventNumber, 1);
+        expect(result.notices.first.detail, isNull);
+      }
+    });
+
+    test(
       'RDATE and EXRULE drop only affected events without leaking values',
       () {
         for (final exception in [

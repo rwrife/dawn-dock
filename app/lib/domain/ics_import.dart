@@ -171,6 +171,13 @@ const String kIcsNoticeExcludedDates = 'excluded-dates';
 const String kIcsNoticeUnsupportedRecurrenceException =
     'unsupported-recurrence-exception';
 
+/// A detached occurrence overrides or cancels a master event. Every event
+/// sharing its UID in this file is dropped; override values are discarded.
+const String kIcsNoticeRecurrenceOverride = 'recurrence-override';
+
+// ponytail: Only same-file UIDs can be grouped; cross-file reconciliation
+// needs a calendar-series store before alarms can be suggested safely.
+
 /// Stable lowercase identifiers for every notice this importer can emit.
 const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeFloatingLocalTime,
@@ -192,6 +199,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeUtcTimezoneId,
   kIcsNoticeExcludedDates,
   kIcsNoticeUnsupportedRecurrenceException,
+  kIcsNoticeRecurrenceOverride,
 ];
 
 /// Outcome of one import: suggestions in file order plus every notice, in
@@ -245,6 +253,11 @@ IcsImportResult importIcsSuggestions(String text) {
       'more than $kIcsImportMaxEvents VEVENT blocks (${blocks.length})',
     );
   }
+  final overriddenUids = {
+    for (final block in blocks)
+      if (block.hasRecurrenceId && block.uid != null && block.uid!.isNotEmpty)
+        block.uid!,
+  };
 
   final notices = <IcsImportNotice>[];
   final suggestions = <AlarmDraft>[];
@@ -256,6 +269,7 @@ IcsImportResult importIcsSuggestions(String text) {
     final draft = _draftForEvent(
       blocks[i],
       eventNumber: eventNumber,
+      overriddenUids: overriddenUids,
       notices: notices,
       usedIds: usedIds,
     );
@@ -397,6 +411,7 @@ class _EventBlock {
   bool malformed = false;
   bool hasExcludedDates = false;
   bool hasUnsupportedRecurrenceException = false;
+  bool hasRecurrenceId = false;
   String? uid;
   String? summary;
   _Property? dtstart;
@@ -463,6 +478,8 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
       case 'RDATE':
       case 'EXRULE':
         open.hasUnsupportedRecurrenceException = true;
+      case 'RECURRENCE-ID':
+        open.hasRecurrenceId = true;
       default:
         break; // DESCRIPTION / ATTENDEE / LOCATION / ... : no field, no leak
     }
@@ -481,6 +498,7 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
 AlarmDraft? _draftForEvent(
   _EventBlock block, {
   required int eventNumber,
+  required Set<String> overriddenUids,
   required List<IcsImportNotice> notices,
   required Set<String> usedIds,
 }) {
@@ -490,6 +508,10 @@ AlarmDraft? _draftForEvent(
 
   if (block.malformed) {
     note(kIcsNoticeMalformedEvent);
+    return null;
+  }
+  if (block.hasRecurrenceId || overriddenUids.contains(block.uid)) {
+    note(kIcsNoticeRecurrenceOverride);
     return null;
   }
   if (block.hasExcludedDates) {
