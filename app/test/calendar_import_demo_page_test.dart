@@ -104,6 +104,44 @@ END:VCALENDAR''',
     },
   );
 
+  testWidgets('detached override blocks master review and confirmation', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:shared
+SUMMARY:Master must not ring
+DTSTART:20260901T070000
+RRULE:FREQ=DAILY
+END:VEVENT
+BEGIN:VEVENT
+UID:shared
+SUMMARY:Override must not ring
+RECURRENCE-ID:20260902T070000
+DTSTART:20260902T080000
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('Recurrence override or canceled occurrence'),
+      findsNWidgets(2),
+    );
+    expect(find.text('Master must not ring'), findsNothing);
+    expect(find.text('Override must not ring'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('bounded recurrence cannot be confirmed as endless alarm', (
     tester,
   ) async {

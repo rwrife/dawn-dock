@@ -56,6 +56,18 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS detached override gate (issue #99, parent #6)
+
+Host `app/test/ics_import_test.dart` covers `RECURRENCE-ID` before/after its
+master, parameterized/mixed-case and empty properties, standalone canceled
+occurrences, and unrelated neighbors. Every VEVENT sharing an overridden UID
+in the same import is rejected with an event-numbered `recurrence-override`
+notice; no override value is retained. Host widget test shows plain-language
+rejection with confirmation disabled when no suggestions remain. These are host
+software checks only; cross-file reconciliation, platform file selection,
+authenticated transport, target alarm execution, and physical verification
+remain open under #6.
+
 ## CONN-05 ICS bounded-recurrence gate (parent #6)
 
 Host `app/test/ics_import_test.dart` rejects `COUNT` and `UNTIL` conditions
@@ -74,9 +86,10 @@ parameters, comma-separated values, empty values, and mixed case) and `EXRULE`
 (including empty values). Affected VEVENTs yield one event-numbered
 `unsupported-recurrence-exception` notice without exception values; valid
 neighbors remain reviewable. Host widget test checks plain-language rejection
-and disabled confirmation. This is host software evidence only. `RECURRENCE-ID`
-override reconciliation, platform file import, authenticated transport, target
-alarm execution, and physical verification remain open; parent #6 stays open.
+and disabled confirmation. This is host software evidence only. Same-file
+`RECURRENCE-ID` override groups are now rejected by issue #99; cross-file
+reconciliation, platform file import, authenticated transport, target alarm
+execution, and physical verification remain open; parent #6 stays open.
 
 ## CONN-05 ICS excluded-date gate (issue #94, parent #6)
 
