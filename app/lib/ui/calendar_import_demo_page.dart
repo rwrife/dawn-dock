@@ -215,6 +215,8 @@ const _noticeText = <String, String>{
       'Unsupported recurrence additions or exclusions; event dropped.',
   kIcsNoticeRecurrenceOverride:
       'Recurrence override or canceled occurrence; event group dropped.',
+  kIcsNoticeCancelledEvent:
+      'Canceled calendar event; event group dropped without an alarm.',
   kIcsNoticeMissingTzid: 'Empty timezone; event dropped.',
   kIcsNoticeUtcTimezoneId: 'UTC timezone designator; verify local intent.',
 };
