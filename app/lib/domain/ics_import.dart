@@ -175,6 +175,10 @@ const String kIcsNoticeUnsupportedRecurrenceException =
 /// sharing its UID in this file is dropped; override values are discarded.
 const String kIcsNoticeRecurrenceOverride = 'recurrence-override';
 
+/// A canceled master cannot suggest an alarm. Every same-file event sharing
+/// its UID is dropped, without retaining the status value.
+const String kIcsNoticeCancelledEvent = 'cancelled-event';
+
 // ponytail: Only same-file UIDs can be grouped; cross-file reconciliation
 // needs a calendar-series store before alarms can be suggested safely.
 
@@ -200,6 +204,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeExcludedDates,
   kIcsNoticeUnsupportedRecurrenceException,
   kIcsNoticeRecurrenceOverride,
+  kIcsNoticeCancelledEvent,
 ];
 
 /// Outcome of one import: suggestions in file order plus every notice, in
@@ -258,6 +263,11 @@ IcsImportResult importIcsSuggestions(String text) {
       if (block.hasRecurrenceId && block.uid != null && block.uid!.isNotEmpty)
         block.uid!,
   };
+  final cancelledUids = {
+    for (final block in blocks)
+      if (block.isCancelled && block.uid != null && block.uid!.isNotEmpty)
+        block.uid!,
+  };
 
   final notices = <IcsImportNotice>[];
   final suggestions = <AlarmDraft>[];
@@ -270,6 +280,7 @@ IcsImportResult importIcsSuggestions(String text) {
       blocks[i],
       eventNumber: eventNumber,
       overriddenUids: overriddenUids,
+      cancelledUids: cancelledUids,
       notices: notices,
       usedIds: usedIds,
     );
@@ -412,6 +423,7 @@ class _EventBlock {
   bool hasExcludedDates = false;
   bool hasUnsupportedRecurrenceException = false;
   bool hasRecurrenceId = false;
+  bool isCancelled = false;
   String? uid;
   String? summary;
   _Property? dtstart;
@@ -480,6 +492,10 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
         open.hasUnsupportedRecurrenceException = true;
       case 'RECURRENCE-ID':
         open.hasRecurrenceId = true;
+      case 'STATUS':
+        if (prop.rawValue.trim().toUpperCase() == 'CANCELLED') {
+          open.isCancelled = true;
+        }
       default:
         break; // DESCRIPTION / ATTENDEE / LOCATION / ... : no field, no leak
     }
@@ -499,6 +515,7 @@ AlarmDraft? _draftForEvent(
   _EventBlock block, {
   required int eventNumber,
   required Set<String> overriddenUids,
+  required Set<String> cancelledUids,
   required List<IcsImportNotice> notices,
   required Set<String> usedIds,
 }) {
@@ -512,6 +529,10 @@ AlarmDraft? _draftForEvent(
   }
   if (block.hasRecurrenceId || overriddenUids.contains(block.uid)) {
     note(kIcsNoticeRecurrenceOverride);
+    return null;
+  }
+  if (block.isCancelled || cancelledUids.contains(block.uid)) {
+    note(kIcsNoticeCancelledEvent);
     return null;
   }
   if (block.hasExcludedDates) {

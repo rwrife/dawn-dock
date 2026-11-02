@@ -305,6 +305,63 @@ void main() {
 
   group('recurrence mapping', () {
     test(
+      'canceled master never suggests an alarm; independent event survives',
+      () {
+        for (final status in ['STATUS:CANCELLED', 'status:cancelled']) {
+          final result = runImport(
+            wrap([
+              vevent([
+                'UID:cancelled-master',
+                'DTSTART:20260901T070000',
+                'RRULE:FREQ=DAILY',
+                status,
+              ]),
+              vevent(['UID:neighbor', 'DTSTART:20260901T080000']),
+            ]),
+          );
+          expect(result.suggestions, hasLength(1));
+          expect(
+            result.suggestions.single.provenance?.sourceEventId,
+            'neighbor',
+          );
+          expect(result.notices.first.code, kIcsNoticeCancelledEvent);
+          expect(result.notices.first.eventNumber, 1);
+          expect(result.notices.first.detail, isNull);
+        }
+      },
+    );
+
+    test('cancelled UID group is blocked regardless of event order', () {
+      for (final firstIsCancelled in [true, false]) {
+        final cancelled = vevent([
+          'UID:shared',
+          'STATUS:CANCELLED',
+          'DTSTART:20260901T070000',
+        ]);
+        final active = vevent([
+          'UID:shared',
+          'DTSTART:20260901T070000',
+          'RRULE:FREQ=DAILY',
+        ]);
+        final result = runImport(
+          wrap([
+            if (firstIsCancelled) cancelled else active,
+            vevent(['UID:neighbor', 'DTSTART:20260901T090000']),
+            if (firstIsCancelled) active else cancelled,
+          ]),
+        );
+        expect(result.suggestions, hasLength(1));
+        expect(result.suggestions.single.provenance?.sourceEventId, 'neighbor');
+        expect(
+          result.notices
+              .where((n) => n.code == kIcsNoticeCancelledEvent)
+              .map((n) => n.eventNumber),
+          [1, 3],
+        );
+      }
+    });
+
+    test(
       'detached override rejects every matching UID regardless of order',
       () {
         for (final firstIsOverride in [true, false]) {

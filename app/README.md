@@ -135,9 +135,11 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   `bounded-recurrence-unsupported` notice rather than repeating forever.
   `RECURRENCE-ID` overrides (including canceled occurrences) drop every event
   with the same UID in this file with a `recurrence-override` notice; override
-  values are not retained. Cross-file reconciliation remains unsupported. Host
-  tests cover these boundaries; no real calendar account, platform file import,
-  or physical alarm test is claimed.
+  values are not retained. `STATUS:CANCELLED` also drops a master and every
+  same-file event sharing its UID with a `cancelled-event` notice; canceled
+  events cannot become alarms. Cross-file reconciliation remains unsupported.
+  Host tests cover these boundaries; no real calendar account, platform file
+  import, or physical alarm test is claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
   weekly recurrence resolver (`firmware/components/alarm_core/`), including
   its int64 overflow guards and 14-day bounded search. It resolves the next

@@ -71,6 +71,38 @@ void main() {
     );
   });
 
+  testWidgets('canceled event blocks suggestion and confirmation', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:canceled-1
+SUMMARY:Canceled standup
+STATUS:CANCELLED
+DTSTART:20260901T070000
+RRULE:FREQ=DAILY
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('Canceled calendar event; event group dropped'),
+      findsOneWidget,
+    );
+    expect(find.text('Canceled standup'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets(
     'recurrence addition shows a plain-language notice, not an alarm',
     (tester) async {
