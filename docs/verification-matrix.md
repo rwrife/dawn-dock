@@ -56,6 +56,17 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS same-file duplicate UID gate (issue #102, parent #6)
+
+Host parser checks both event orders, malformed and excluded siblings, and
+unaffected neighbors. Every event in a conflicting same-file UID group is
+dropped with a numbered, value-free `duplicate-uid` notice; override and
+cancellation groups keep their more specific notices. Host widget check proves
+both conflicting alarms absent and confirmation disabled if no suggestion
+survives. This is software evidence only. Cross-file reconciliation, selected
+file import, device transport and execution, and physical testing remain open
+under #6.
+
 ## CONN-05 ICS canceled master gate (parent #6)
 
 Host `app/test/ics_import_test.dart` checks mixed-case `STATUS:CANCELLED`,

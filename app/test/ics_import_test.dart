@@ -876,31 +876,109 @@ void main() {
       expect(a.suggestions.single, b.suggestions.single);
     });
 
-    test('duplicate UIDs stay importable with suffixed ids and a notice', () {
+    test('conflicting same-file UID groups never produce two alarms', () {
+      for (final reverse in [false, true]) {
+        final first = vevent([
+          'UID:dup-uid',
+          'SUMMARY:Private first',
+          'DTSTART;TZID=America/New_York:20260901T070000',
+        ]);
+        final second = vevent([
+          'UID:dup-uid',
+          'SUMMARY:Private second',
+          'DTSTART;TZID=America/New_York:20260902T080000',
+        ]);
+        final result = runImport(
+          wrap([
+            if (reverse) second else first,
+            vevent(['UID:neighbor', 'DTSTART:20260901T090000']),
+            if (reverse) first else second,
+          ]),
+        );
+        expect(result.suggestions, hasLength(1));
+        expect(result.suggestions.single.provenance?.sourceEventId, 'neighbor');
+        expect(
+          result.notices
+              .where((n) => n.code == kIcsNoticeDuplicateUid)
+              .map((n) => n.eventNumber),
+          [1, 3],
+        );
+        expect(
+          result.notices
+              .where((n) => n.code == kIcsNoticeDuplicateUid)
+              .every((n) => n.detail == null),
+          isTrue,
+        );
+        expect(
+          jsonEncode(result.notices.map((n) => n.toMap()).toList()),
+          isNot(contains('Private')),
+        );
+      }
+    });
+
+    test('duplicate UID drops valid event even with malformed sibling', () {
       final result = runImport(
         wrap([
-          vevent([
-            'UID:dup-uid',
-            'DTSTART;TZID=America/New_York:20260901T070000',
-          ]),
-          vevent([
-            'UID:dup-uid',
-            'DTSTART;TZID=America/New_York:20260902T080000',
-          ]),
+          vevent(['UID:shared', 'DTSTART:20260901T070000']),
+          vevent(['UID:shared', 'DTSTART:bad', 'SUMMARY:one', 'SUMMARY:two']),
+          vevent(['UID:good', 'DTSTART:20260901T080000']),
         ]),
       );
-      expect(result.suggestions, hasLength(2));
-      expect(result.suggestions[0].id, 'ics-b1c8f44d75465381');
-      expect(result.suggestions[1].id, 'ics-b1c8f44d75465381-2');
+      expect(result.suggestions.single.provenance?.sourceEventId, 'good');
       expect(
         result.notices
             .where((n) => n.code == kIcsNoticeDuplicateUid)
-            .single
-            .eventNumber,
-        2,
+            .map((n) => n.eventNumber),
+        [1, 2],
       );
-      // Provenance keeps the ORIGINAL uid, not the suffixed id.
-      expect(result.suggestions[1].provenance?.sourceEventId, 'dup-uid');
+    });
+
+    test('duplicate UID drops valid event even with excluded sibling', () {
+      final result = runImport(
+        wrap([
+          vevent(['UID:shared', 'DTSTART:20260901T070000']),
+          vevent([
+            'UID:shared',
+            'DTSTART:20260902T070000',
+            'EXDATE:20260903T070000',
+          ]),
+        ]),
+      );
+      expect(result.suggestions, isEmpty);
+      expect(
+        result.notices
+            .where((n) => n.code == kIcsNoticeDuplicateUid)
+            .map((n) => n.eventNumber),
+        [1, 2],
+      );
+    });
+
+    test('override and cancellation keep their specific group notices', () {
+      final result = runImport(
+        wrap([
+          vevent(['UID:overridden', 'DTSTART:20260901T070000']),
+          vevent([
+            'UID:overridden',
+            'RECURRENCE-ID:20260901T070000',
+            'DTSTART:20260901T080000',
+          ]),
+          vevent(['UID:cancelled', 'DTSTART:20260901T070000']),
+          vevent([
+            'UID:cancelled',
+            'STATUS:CANCELLED',
+            'DTSTART:20260901T080000',
+          ]),
+        ]),
+      );
+      expect(result.suggestions, isEmpty);
+      expect(
+        result.notices.where((n) => n.code == kIcsNoticeRecurrenceOverride),
+        hasLength(2),
+      );
+      expect(
+        result.notices.where((n) => n.code == kIcsNoticeCancelledEvent),
+        hasLength(2),
+      );
     });
 
     test('missing UID drops with a notice', () {

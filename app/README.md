@@ -137,7 +137,10 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   with the same UID in this file with a `recurrence-override` notice; override
   values are not retained. `STATUS:CANCELLED` also drops a master and every
   same-file event sharing its UID with a `cancelled-event` notice; canceled
-  events cannot become alarms. Cross-file reconciliation remains unsupported.
+  events cannot become alarms. Other repeated same-file UIDs drop every
+  matching event with value-free `duplicate-uid` notices, even when one event
+  is malformed or excluded; unrelated event suggestions remain reviewable.
+  Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
