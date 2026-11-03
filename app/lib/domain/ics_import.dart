@@ -129,9 +129,13 @@ const String kIcsNoticeLabelTruncated = 'label-truncated';
 /// The event had no `UID`; it was dropped (ids and provenance require one).
 const String kIcsNoticeMissingUid = 'missing-uid';
 
-/// A previous event already used this `UID`; this event's draft id was
-/// collision-suffixed so the suggestion stays reviewable.
+/// A previous event already used this `UID`; all events sharing this
+/// `UID` are dropped so conflicting calendar revisions or duplicates cannot
+/// produce separate alarms.
 const String kIcsNoticeDuplicateUid = 'duplicate-uid';
+
+/// Distinct UIDs produced the same draft hash; a suffix kept both reviewable.
+const String kIcsNoticeIdCollision = 'id-collision';
 
 /// The `UID` exceeds `kMaxSourceEventIdBytes`; the event was dropped.
 const String kIcsNoticeOversizedUid = 'oversized-uid';
@@ -194,6 +198,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeLabelTruncated,
   kIcsNoticeMissingUid,
   kIcsNoticeDuplicateUid,
+  kIcsNoticeIdCollision,
   kIcsNoticeOversizedUid,
   kIcsNoticeInvalidDtstart,
   kIcsNoticeMalformedEvent,
@@ -268,6 +273,13 @@ IcsImportResult importIcsSuggestions(String text) {
       if (block.isCancelled && block.uid != null && block.uid!.isNotEmpty)
         block.uid!,
   };
+  final uidCounts = <String, int>{};
+  for (final block in blocks) {
+    final uid = block.uid;
+    if (uid != null && uid.isNotEmpty) {
+      uidCounts.update(uid, (count) => count + 1, ifAbsent: () => 1);
+    }
+  }
 
   final notices = <IcsImportNotice>[];
   final suggestions = <AlarmDraft>[];
@@ -281,6 +293,7 @@ IcsImportResult importIcsSuggestions(String text) {
       eventNumber: eventNumber,
       overriddenUids: overriddenUids,
       cancelledUids: cancelledUids,
+      uidCounts: uidCounts,
       notices: notices,
       usedIds: usedIds,
     );
@@ -516,6 +529,7 @@ AlarmDraft? _draftForEvent(
   required int eventNumber,
   required Set<String> overriddenUids,
   required Set<String> cancelledUids,
+  required Map<String, int> uidCounts,
   required List<IcsImportNotice> notices,
   required Set<String> usedIds,
 }) {
@@ -523,16 +537,22 @@ AlarmDraft? _draftForEvent(
     IcsImportNotice(code: code, eventNumber: eventNumber, detail: detail),
   );
 
-  if (block.malformed) {
-    note(kIcsNoticeMalformedEvent);
-    return null;
-  }
   if (block.hasRecurrenceId || overriddenUids.contains(block.uid)) {
     note(kIcsNoticeRecurrenceOverride);
     return null;
   }
   if (block.isCancelled || cancelledUids.contains(block.uid)) {
     note(kIcsNoticeCancelledEvent);
+    return null;
+  }
+  // ponytail: Same-file UID groups only; cross-file revisions need a
+  // calendar-series store before import can reconcile them.
+  if (block.uid != null && (uidCounts[block.uid] ?? 0) > 1) {
+    note(kIcsNoticeDuplicateUid);
+    return null;
+  }
+  if (block.malformed) {
+    note(kIcsNoticeMalformedEvent);
     return null;
   }
   if (block.hasExcludedDates) {
@@ -590,7 +610,9 @@ AlarmDraft? _draftForEvent(
   }
   usedIds.add(id);
   if (suffix > 1) {
-    note(kIcsNoticeDuplicateUid);
+    // ponytail: FNV-1a can collide across distinct UIDs; keep both drafts
+    // reviewable until a collision-resistant stable identity is adopted.
+    note(kIcsNoticeIdCollision);
   }
 
   try {
