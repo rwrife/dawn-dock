@@ -1102,7 +1102,80 @@ void main() {
     });
   });
 
+  group('embedded alarms', () {
+    test('mixed-case VALARM drops event without leaking nested properties', () {
+      final result = runImport(
+        wrap([
+          vevent([
+            'UID:triggered',
+            'DTSTART:20260901T070000',
+            'RRULE:FREQ=DAILY',
+            'SUMMARY:Wrong time',
+            'begin:valarm',
+            'TRIGGER:-PT15M',
+            'UID:nested-private',
+            'SUMMARY:Nested private text',
+            'end:valarm',
+          ]),
+          vevent(['UID:neighbor', 'DTSTART:20260902T080000', 'SUMMARY:Safe']),
+        ]),
+      );
+      expect(result.suggestions.map((draft) => draft.label), ['Safe']);
+      expect(
+        result.notices.where((n) => n.eventNumber == 1).map((n) => n.code),
+        [kIcsNoticeEmbeddedAlarm],
+      );
+      expect(
+        result.notices.first.toString(),
+        isNot(contains('nested-private')),
+      );
+      expect(result.notices.first.toString(), isNot(contains('PT15M')));
+      expect(result.notices.first.detail, isNull);
+    });
+
+    test('unterminated and wrapped VALARM drop only affected event', () {
+      final result = runImport(
+        wrap([
+          vevent([
+            'UID:broken',
+            'DTSTART:20260901T070000',
+            'BEGIN:VALARM',
+            'TRIGGER:-PT20M',
+          ]),
+          vevent([
+            'UID:wrapped',
+            'DTSTART:20260901T070000',
+            'BEGIN:VTODO',
+            'BEGIN:VALARM',
+            'TRIGGER:-PT10M',
+            'END:VALARM',
+            'END:VTODO',
+          ]),
+          vevent(['UID:ok', 'DTSTART:20260901T090000', 'SUMMARY:Okay']),
+        ]),
+      );
+      expect(result.suggestions.map((draft) => draft.label), ['Okay']);
+      expect(
+        result.notices
+            .where((n) => n.code == kIcsNoticeEmbeddedAlarm)
+            .map((n) => n.eventNumber),
+        [1, 2],
+      );
+    });
+  });
+
   group('malformed events', () {
+    test('unrelated nested component cannot lend its UID or DTSTART', () {
+      final result = importOne([
+        'BEGIN:VTODO',
+        'UID:nested-only',
+        'DTSTART:20260901T070000',
+        'END:VTODO',
+      ]);
+      expect(result.suggestions, isEmpty);
+      expect(codes(result), contains(kIcsNoticeMalformedEvent));
+    });
+
     test('duplicate SUMMARY marks the event malformed', () {
       final result = importOne([
         'UID:m1',

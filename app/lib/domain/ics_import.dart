@@ -179,6 +179,10 @@ const String kIcsNoticeUnsupportedRecurrenceException =
 /// sharing its UID in this file is dropped; override values are discarded.
 const String kIcsNoticeRecurrenceOverride = 'recurrence-override';
 
+/// A nested VALARM trigger cannot be represented by the event-start weekday
+/// mask. Drop the event without retaining trigger or other nested content.
+const String kIcsNoticeEmbeddedAlarm = 'embedded-alarm';
+
 /// A canceled master cannot suggest an alarm. Every same-file event sharing
 /// its UID is dropped, without retaining the status value.
 const String kIcsNoticeCancelledEvent = 'cancelled-event';
@@ -210,6 +214,7 @@ const List<String> kIcsImportNoticeCodes = [
   kIcsNoticeUnsupportedRecurrenceException,
   kIcsNoticeRecurrenceOverride,
   kIcsNoticeCancelledEvent,
+  kIcsNoticeEmbeddedAlarm,
 ];
 
 /// Outcome of one import: suggestions in file order plus every notice, in
@@ -437,6 +442,7 @@ class _EventBlock {
   bool hasUnsupportedRecurrenceException = false;
   bool hasRecurrenceId = false;
   bool isCancelled = false;
+  bool hasEmbeddedAlarm = false;
   String? uid;
   String? summary;
   _Property? dtstart;
@@ -449,6 +455,7 @@ class _EventBlock {
 List<_EventBlock> _splitVEvents(List<String> lines) {
   final blocks = <_EventBlock>[];
   _EventBlock? open;
+  var nestedDepth = 0;
   for (final line in lines) {
     final prop = _propertyOf(line);
     if (prop == null) {
@@ -464,15 +471,38 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
       }
       open = _EventBlock();
       blocks.add(open);
+      nestedDepth = 0;
       continue;
     }
     if (prop.name == 'END' && prop.rawValue.toUpperCase() == 'VEVENT') {
+      if (open != null && nestedDepth != 0) open.malformed = true;
       open = null;
+      nestedDepth = 0;
       continue;
     }
     if (open == null) {
       continue; // outside any VEVENT — never retained
     }
+    if (prop.name == 'BEGIN') {
+      if (prop.rawValue.toUpperCase() == 'VALARM') {
+        open.hasEmbeddedAlarm = true;
+      } else {
+        open.malformed = true; // unsupported nested component
+      }
+      nestedDepth++;
+      continue;
+    }
+    if (prop.name == 'END') {
+      if (nestedDepth == 0) {
+        open.malformed = true;
+      } else {
+        nestedDepth--;
+      }
+      continue;
+    }
+    // ponytail: Nested component properties are never suggestions; full
+    // RFC component validation belongs in a separate calendar parser.
+    if (nestedDepth != 0) continue;
     switch (prop.name) {
       case 'UID':
         if (open.uid != null) {
@@ -549,6 +579,10 @@ AlarmDraft? _draftForEvent(
   // calendar-series store before import can reconcile them.
   if (block.uid != null && (uidCounts[block.uid] ?? 0) > 1) {
     note(kIcsNoticeDuplicateUid);
+    return null;
+  }
+  if (block.hasEmbeddedAlarm) {
+    note(kIcsNoticeEmbeddedAlarm);
     return null;
   }
   if (block.malformed) {

@@ -140,6 +140,10 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   events cannot become alarms. Other repeated same-file UIDs drop every
   matching event with value-free `duplicate-uid` notices, even when one event
   is malformed or excluded; unrelated event suggestions remain reviewable.
+  A VEVENT with an embedded `VALARM` is also dropped: its trigger cannot be
+  mapped to a repeating alarm at the event start. Nested properties are not
+  retained in suggestions or notices; a value-free `embedded-alarm` notice
+  identifies the affected event, and unrelated events remain reviewable.
   Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.

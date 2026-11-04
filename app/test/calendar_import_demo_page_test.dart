@@ -71,6 +71,38 @@ void main() {
     );
   });
 
+  testWidgets('embedded alarm blocks review and confirmation', (tester) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:reminder
+SUMMARY:Do not ring
+DTSTART:20260901T070000
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+END:VALARM
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('embedded calendar alarm; event dropped'),
+      findsOneWidget,
+    );
+    expect(find.text('Do not ring'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('canceled event blocks suggestion and confirmation', (
     tester,
   ) async {
