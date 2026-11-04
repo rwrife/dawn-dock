@@ -203,6 +203,7 @@ const _noticeText = <String, String>{
   kIcsNoticeLabelTruncated: 'Title shortened to fit alarm label.',
   kIcsNoticeMissingUid: 'Missing event ID; event dropped.',
   kIcsNoticeDuplicateUid: 'Duplicate event ID; event group dropped.',
+  kIcsNoticeEmbeddedAlarm: 'Event contains an embedded calendar alarm; event dropped. Its trigger time was not imported.',
   kIcsNoticeIdCollision: 'Suggestion ID collision; suggestion ID changed.',
   kIcsNoticeOversizedUid: 'Event ID too long; event dropped.',
   kIcsNoticeInvalidDtstart: 'Invalid start time; event dropped.',
