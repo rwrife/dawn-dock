@@ -730,6 +730,15 @@ _StartInfo? _parseDtstart(
       onNotice(kIcsNoticeInvalidDtstart, detail: 'seconds outside a minute');
       return null;
     }
+    if (seconds != 0) {
+      // ponytail: AlarmDraft stores minute precision; add seconds only with
+      // a matching device protocol and recurrence model.
+      onNotice(
+        kIcsNoticeInvalidDtstart,
+        detail: 'nonzero seconds cannot be represented',
+      );
+      return null;
+    }
     if (zulu || (tzidParam != null && _isUtcDesignator(tzidParam))) {
       // Wall time in UTC cannot be re-homed without a zone database; keep
       // the literal wall time and make the user confirm the zone.

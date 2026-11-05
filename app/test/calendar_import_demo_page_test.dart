@@ -71,6 +71,34 @@ void main() {
     );
   });
 
+  testWidgets('nonzero seconds block review and confirmation', (tester) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:second-precision
+SUMMARY:Must not ring early
+DTSTART:20260901T070059
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('Invalid start time; event dropped.'),
+      findsOneWidget,
+    );
+    expect(find.text('Must not ring early'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('embedded alarm blocks review and confirmation', (tester) async {
     await _pumpTallPage(tester);
     await tester.enterText(
