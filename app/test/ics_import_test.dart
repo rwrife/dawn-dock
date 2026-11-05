@@ -155,6 +155,32 @@ void main() {
   });
 
   group('DTSTART forms', () {
+    test('nonzero seconds are rejected without losing valid neighbors', () {
+      final result = runImport(
+        wrap([
+          vevent(['UID:early', 'DTSTART:20260901T070001']),
+          vevent([
+            'UID:exact',
+            'DTSTART;TZID=America/New_York:20260901T070000',
+          ]),
+          vevent(['UID:late', 'DTSTART;TZID=UTC:20260901T070059']),
+          vevent(['UID:zulu', 'DTSTART:20260901T070000Z']),
+        ]),
+      );
+      expect(
+        result.suggestions.map((draft) => draft.provenance!.sourceEventId),
+        ['exact', 'zulu'],
+      );
+      final rejected = result.notices
+          .where((notice) => notice.code == kIcsNoticeInvalidDtstart)
+          .toList();
+      expect(rejected.map((notice) => notice.eventNumber), [1, 3]);
+      expect(
+        rejected.map((notice) => notice.detail),
+        everyElement('nonzero seconds cannot be represented'),
+      );
+    });
+
     test('named TZID keeps the zone verbatim, no zone judgments', () {
       final result = importOne([
         'UID:tz1',

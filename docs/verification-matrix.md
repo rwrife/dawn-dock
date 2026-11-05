@@ -56,6 +56,16 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS minute-precision gate (issue #106, parent #6)
+
+Host parser tests drop events with nonzero `DTSTART` seconds (01 and 59)
+with numbered `invalid-dtstart` notices that omit the original time. Exact-
+minute events in floating, named-zone, and UTC forms stay reviewable in the
+same file. Host widget check disables confirmation when no suggestion survives.
+This is host software evidence only: platform file selection,
+authenticated transport, device alarm behavior, and physical testing remain
+open under #6.
+
 ## CONN-05 ICS embedded alarm gate (issue #104, parent #6)
 
 Host parser tests reject VEVENTs containing nested `VALARM` (mixed-case,

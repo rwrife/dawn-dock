@@ -144,6 +144,9 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   mapped to a repeating alarm at the event start. Nested properties are not
   retained in suggestions or notices; a value-free `embedded-alarm` notice
   identifies the affected event, and unrelated events remain reviewable.
+  Nonzero `DTSTART` seconds also drop that event with `invalid-dtstart`:
+  draft/device schedules have minute precision, so rounding would ring early.
+  Exact-minute neighbors stay reviewable; notice detail contains no time value.
   Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.
