@@ -739,6 +739,12 @@ _StartInfo? _parseDtstart(
       );
       return null;
     }
+    if (zulu && tzidParam != null && !_isUtcDesignator(tzidParam)) {
+      // Contradictory zone declarations cannot be reconciled without
+      // guessing. Never leak the named zone through the notice.
+      onNotice(kIcsNoticeInvalidDtstart);
+      return null;
+    }
     if (zulu || (tzidParam != null && _isUtcDesignator(tzidParam))) {
       // Wall time in UTC cannot be re-homed without a zone database; keep
       // the literal wall time and make the user confirm the zone.

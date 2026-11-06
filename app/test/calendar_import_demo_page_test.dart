@@ -71,6 +71,36 @@ void main() {
     );
   });
 
+  testWidgets('conflicting UTC suffix and named zone block confirmation', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:zone-conflict
+SUMMARY:Private zone
+DTSTART;TZID=America/New_York:20260901T070000Z
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('Invalid start time; event dropped.'),
+      findsOneWidget,
+    );
+    expect(find.text('Private zone'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('nonzero seconds block review and confirmation', (tester) async {
     await _pumpTallPage(tester);
     await tester.enterText(

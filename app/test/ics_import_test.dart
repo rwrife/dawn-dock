@@ -155,6 +155,34 @@ void main() {
   });
 
   group('DTSTART forms', () {
+    test('conflicting Z and named TZID drop only affected event', () {
+      final result = runImport(
+        wrap([
+          vevent([
+            'UID:conflict',
+            'DTSTART;TZID=America/New_York:20260901T070000Z',
+          ]),
+          vevent(['UID:neighbor', 'DTSTART:20260901T080000Z']),
+          vevent(['UID:compatible', 'DTSTART;TZID=UTC:20260901T090000Z']),
+        ]),
+      );
+      expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+        'neighbor',
+        'compatible',
+      ]);
+      final rejected = result.notices
+          .where(
+            (n) => n.code == kIcsNoticeInvalidDtstart && n.eventNumber == 1,
+          )
+          .single;
+      expect(rejected.detail, isNull);
+      expect(
+        jsonEncode(result.notices.map((n) => n.toMap()).toList()),
+        isNot(contains('America/New_York')),
+      );
+      expect(codes(result), contains(kIcsNoticeUtcWallTime));
+    });
+
     test('nonzero seconds are rejected without losing valid neighbors', () {
       final result = runImport(
         wrap([
