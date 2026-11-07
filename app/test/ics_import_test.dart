@@ -265,6 +265,36 @@ void main() {
       expect(codes(result), contains(kIcsNoticeAllDayDefaultTime));
     });
 
+    test('all-day DATE with TZID drops event without leaking zone', () {
+      for (final start in [
+        'DTSTART;VALUE=DATE;TZID=America/New_York:20260901',
+        'DTSTART;TZID=America/New_York:20260901',
+        'DTSTART;VALUE=DATE;TZID=:20260901',
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent(['UID:blocked', start, 'RRULE:FREQ=DAILY']),
+            vevent(['UID:neighbor', 'DTSTART;VALUE=DATE:20260902']),
+          ]),
+        );
+        expect(result.suggestions, hasLength(1), reason: start);
+        expect(result.suggestions.single.provenance!.sourceEventId, 'neighbor');
+        expect(result.notices.first.code, kIcsNoticeInvalidDtstart);
+        expect(result.notices.first.eventNumber, 1);
+        expect(result.notices.first.detail, isNull);
+        expect(
+          result.notices.where(
+            (n) => n.eventNumber == 1 && n.code == kIcsNoticeAllDayDefaultTime,
+          ),
+          isEmpty,
+        );
+        expect(
+          jsonEncode(result.notices.map((n) => n.toMap()).toList()),
+          isNot(contains('America/New_York')),
+        );
+      }
+    });
+
     test('empty TZID parameter drops the event with its own code', () {
       final result = importOne(['UID:ntz', 'DTSTART;TZID=:20260901T070000']);
       expect(result.suggestions, isEmpty);

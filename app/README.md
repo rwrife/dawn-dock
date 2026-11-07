@@ -149,7 +149,9 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   Exact-minute neighbors stay reviewable; notice detail contains no time value.
   A trailing UTC `Z` paired with a non-UTC `TZID` is contradictory and drops
   that event with a value-free `invalid-dtstart` notice; UTC `TZID` plus `Z`
-  remains reviewable. Cross-file reconciliation remains unsupported.
+  remains reviewable. A DATE start carrying TZID is rejected with a value-free
+  `invalid-dtstart` notice rather than silently replacing its zone with UTC.
+  Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.
 - `recurrence.dart` is a line-faithful pure-Dart mirror of the firmware
