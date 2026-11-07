@@ -56,6 +56,15 @@ Every result records commit, artifact/hardware revision, tool/instrument, method
 | ALARM-04 | Snooze defaults/range/count and 60-minute occurrence timeout match the baseline | Host transition/boundary fixtures; target control tests | Host tests cover 1/30-minute range boundaries, 9-minute default, repeated-edge rejection, six-snooze limit, deadline, and 60-minute timeout; target controls remain open |
 | ALARM-05 | Reboot resumes only within 60-minute occurrence lifetime and never duplicates the occurrence | Host persistence fixtures; controlled target resets | Host fixtures cover once-per-boot resume, snooze cancellation, prolonged-power-off missed classification, complete occurrence-journal serialization, revision/generation CAS runtime commits, no-write runtime acknowledgement retry, CRC corruption fallback, torn-write read-back rejection, and rollback-preserving schema migration; NVS API binding/startup inspection now has host fake coverage, while runtime integration and controlled target resets remain open |
 
+## CONN-05 ICS zoned all-day DATE gate (issue #110, parent #6)
+
+Host parser tests reject both explicit and implicit DATE `DTSTART` values
+carrying a TZID, including an empty one, with event-numbered value-free
+`invalid-dtstart` notices and no all-day default-time notice. An unrelated
+ordinary all-day event remains reviewable. This is software evidence only;
+selected-file import, named-zone normalization, authenticated transport,
+device execution, and physical alarm tests remain open under #6.
+
 ## CONN-05 ICS conflicting zone declarations (issue #108, parent #6)
 
 Host parser tests drop a `DTSTART` combining trailing UTC `Z` with a named

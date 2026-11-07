@@ -773,6 +773,12 @@ _StartInfo? _parseDtstart(
       timezone = tid;
     }
   } else if (dMatch != null && (isDateValue || dtMatch == null)) {
+    if (tzidParam != null) {
+      // DATE has no wall time to resolve; silently substituting UTC could
+      // turn a zoned all-day event into an unintended recurring alarm.
+      onNotice(kIcsNoticeInvalidDtstart);
+      return null;
+    }
     year = int.parse(dMatch.group(1)!);
     month = int.parse(dMatch.group(2)!);
     day = int.parse(dMatch.group(3)!);
