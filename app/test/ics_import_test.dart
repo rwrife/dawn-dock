@@ -155,6 +155,30 @@ void main() {
   });
 
   group('DTSTART forms', () {
+    test('contradictory or unsupported VALUE drops only affected event', () {
+      for (final start in [
+        'DTSTART;VALUE=DATE:20260901T070000',
+        'DTSTART;VALUE=DATE-TIME:20260901',
+        'DTSTART;VALUE=PERIOD:20260901T070000',
+        'DTSTART;VALUE=:20260901T070000',
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent(['UID:bad', start]),
+            vevent(['UID:good', 'DTSTART;VALUE=DATE-TIME:20260902T080000']),
+            vevent(['UID:day', 'DTSTART;VALUE=DATE:20260903']),
+          ]),
+        );
+        expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+          'good',
+          'day',
+        ], reason: start);
+        final notice = result.notices.where((n) => n.eventNumber == 1).single;
+        expect(notice.code, kIcsNoticeInvalidDtstart);
+        expect(notice.detail, isNull);
+      }
+    });
+
     test('conflicting Z and named TZID drop only affected event', () {
       final result = runImport(
         wrap([
