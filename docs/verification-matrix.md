@@ -162,6 +162,16 @@ authenticated transport, or physical alarm execution. `RDATE` and `EXRULE`
 are separately rejected by issue #96; `RECURRENCE-ID` reconciliation remains
 unsupported. Parent #6 stays open.
 
+## CONN-05 ICS DTSTART VALUE gate (issue #112, parent #6)
+
+Host `app/test/ics_import_test.dart` checks mismatched `VALUE=DATE` with a
+DATE-TIME timestamp, mismatched `VALUE=DATE-TIME` with a DATE, unsupported
+`VALUE=PERIOD`, and empty VALUE. Each affected event yields a value-free
+`invalid-dtstart` notice; adjacent explicit DATE and DATE-TIME events stay
+reviewable. These are host parser tests only. Platform selected-file import,
+authenticated device transport, actual alarm execution, and physical testing
+remain open under #6.
+
 ## CONN-05 ICS RRULE ambiguity gate (issue #92, parent #6)
 
 Host `app/test/ics_import_test.dart` exercises duplicate RRULE keys (including

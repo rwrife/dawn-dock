@@ -151,6 +151,9 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   that event with a value-free `invalid-dtstart` notice; UTC `TZID` plus `Z`
   remains reviewable. A DATE start carrying TZID is rejected with a value-free
   `invalid-dtstart` notice rather than silently replacing its zone with UTC.
+  Explicit DTSTART `VALUE=DATE` and `VALUE=DATE-TIME` must agree with the
+  date or timestamp form; unsupported or empty VALUE declarations are also
+  rejected per event with a value-free notice, leaving neighbors reviewable.
   Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.

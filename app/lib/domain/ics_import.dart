@@ -714,10 +714,27 @@ _StartInfo? _parseDtstart(
   int day;
   String timezone;
 
-  final isDateValue = (prop.params['VALUE']?.toUpperCase() == 'DATE');
+  final rawValueParam = prop.params['VALUE'];
+  final normalizedValue = rawValueParam?.trim().toUpperCase();
+  if (rawValueParam != null &&
+      normalizedValue != 'DATE' &&
+      normalizedValue != 'DATE-TIME') {
+    onNotice(kIcsNoticeInvalidDtstart);
+    return null;
+  }
+  final isDateValue = normalizedValue == 'DATE';
+  final isDateTimeValue = normalizedValue == 'DATE-TIME';
 
   final dtMatch = _dateTimePattern.firstMatch(value);
   final dMatch = _datePattern.firstMatch(value);
+  if (isDateValue && dtMatch != null) {
+    onNotice(kIcsNoticeInvalidDtstart);
+    return null;
+  }
+  if (isDateTimeValue && dMatch != null) {
+    onNotice(kIcsNoticeInvalidDtstart);
+    return null;
+  }
   if (dtMatch != null && !isDateValue) {
     year = int.parse(dtMatch.group(1)!);
     month = int.parse(dtMatch.group(2)!);
@@ -772,7 +789,7 @@ _StartInfo? _parseDtstart(
       }
       timezone = tid;
     }
-  } else if (dMatch != null && (isDateValue || dtMatch == null)) {
+  } else if (dMatch != null && !isDateTimeValue) {
     if (tzidParam != null) {
       // DATE has no wall time to resolve; silently substituting UTC could
       // turn a zoned all-day event into an unintended recurring alarm.
