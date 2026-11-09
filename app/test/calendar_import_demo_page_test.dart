@@ -101,6 +101,36 @@ END:VCALENDAR''',
     );
   });
 
+  testWidgets('duplicate DTSTART zone blocks review and confirmation', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '''BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:duplicate-zone
+SUMMARY:Must not ring
+DTSTART;TZID=America/New_York;tzid=UTC:20260901T070000
+END:VEVENT
+END:VCALENDAR''',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0 suggestions for review'), findsOneWidget);
+    expect(
+      find.textContaining('Invalid start time; event dropped.'),
+      findsOneWidget,
+    );
+    expect(find.text('Must not ring'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('confirm-import')))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('nonzero seconds block review and confirmation', (tester) async {
     await _pumpTallPage(tester);
     await tester.enterText(
