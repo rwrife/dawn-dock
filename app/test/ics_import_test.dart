@@ -155,6 +155,34 @@ void main() {
   });
 
   group('DTSTART forms', () {
+    test('repeated TZID or VALUE never overwrites an earlier declaration', () {
+      for (final start in [
+        'DTSTART;TZID=America/New_York;tzid=UTC:20260901T070000',
+        'DTSTART;VALUE=DATE;value=DATE-TIME:20260901T070000',
+        'DTSTART;VALUE=DATE-TIME;VALUE=DATE-TIME:20260901T070000',
+        'DTSTART;TZID=UTC;TZID=America/New_York:20260901T070000',
+        'DTSTART;TZID=UTC;tzid=:20260901T070000',
+      ]) {
+        final result = runImport(
+          wrap([
+            vevent(['UID:bad', start]),
+            vevent(['UID:good', 'DTSTART:20260902T080000']),
+          ]),
+        );
+        expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+          'good',
+        ], reason: start);
+        final rejected = result.notices.where((n) => n.eventNumber == 1).single;
+        expect(rejected.code, kIcsNoticeInvalidDtstart);
+        expect(rejected.detail, isNull);
+        expect(
+          jsonEncode(rejected.toMap()),
+          isNot(contains('America/New_York')),
+        );
+        expect(jsonEncode(rejected.toMap()), isNot(contains('20260901')));
+      }
+    });
+
     test('contradictory or unsupported VALUE drops only affected event', () {
       for (final start in [
         'DTSTART;VALUE=DATE:20260901T070000',

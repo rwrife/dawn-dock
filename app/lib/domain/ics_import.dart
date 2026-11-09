@@ -363,11 +363,13 @@ class _Property {
     required this.name,
     required this.params,
     required this.rawValue,
+    required this.repeatedStartParam,
   });
 
   final String name;
   final Map<String, String> params;
   final String rawValue;
+  final bool repeatedStartParam;
 
   String textValue() => _unescapeText(rawValue);
 }
@@ -384,18 +386,22 @@ _Property? _propertyOf(String line) {
     return null;
   }
   final params = <String, String>{};
+  var repeatedStartParam = false;
   for (final param in parts.skip(1)) {
     final eq = param.indexOf('=');
     if (eq > 0) {
-      params[param.substring(0, eq).toUpperCase()] = param
-          .substring(eq + 1)
-          .replaceAll('"', '');
+      final key = param.substring(0, eq).toUpperCase();
+      if ((key == 'TZID' || key == 'VALUE') && params.containsKey(key)) {
+        repeatedStartParam = true;
+      }
+      params[key] = param.substring(eq + 1).replaceAll('"', '');
     }
   }
   return _Property(
     name: name,
     params: params,
     rawValue: line.substring(colon + 1),
+    repeatedStartParam: repeatedStartParam,
   );
 }
 
@@ -702,6 +708,12 @@ _StartInfo? _parseDtstart(
 }) {
   if (prop == null) {
     onNotice(kIcsNoticeInvalidDtstart, detail: 'no DTSTART');
+    return null;
+  }
+  if (prop.repeatedStartParam) {
+    // Duplicate zone/type declarations are ambiguous even when equal.
+    // Do not surface either value in a notice.
+    onNotice(kIcsNoticeInvalidDtstart);
     return null;
   }
   final value = prop.rawValue.trim();

@@ -149,7 +149,10 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   Exact-minute neighbors stay reviewable; notice detail contains no time value.
   A trailing UTC `Z` paired with a non-UTC `TZID` is contradictory and drops
   that event with a value-free `invalid-dtstart` notice; UTC `TZID` plus `Z`
-  remains reviewable. A DATE start carrying TZID is rejected with a value-free
+  remains reviewable. Repeated `TZID` or `VALUE` parameters on `DTSTART` are
+  also dropped per event with a value-free `invalid-dtstart` notice so later
+  declarations cannot silently overwrite contradictory earlier parameters.
+  A DATE start carrying TZID is rejected with a value-free
   `invalid-dtstart` notice rather than silently replacing its zone with UTC.
   Explicit DTSTART `VALUE=DATE` and `VALUE=DATE-TIME` must agree with the
   date or timestamp form; unsupported or empty VALUE declarations are also
