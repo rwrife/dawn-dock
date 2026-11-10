@@ -157,6 +157,10 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   Explicit DTSTART `VALUE=DATE` and `VALUE=DATE-TIME` must agree with the
   date or timestamp form; unsupported or empty VALUE declarations are also
   rejected per event with a value-free notice, leaving neighbors reviewable.
+  A single outer `VCALENDAR` envelope is required: missing, displaced, or
+  repeated calendar boundary markers reject the whole import without suggestions,
+  while UTF-8 BOM, blank lines, valid VTIMEZONE components, and adjacent events
+  remain supported.
   Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.

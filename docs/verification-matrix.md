@@ -138,6 +138,16 @@ software checks only; cross-file reconciliation, platform file selection,
 authenticated transport, target alarm execution, and physical verification
 remain open under #6.
 
+## CONN-05 ICS envelope gate (issue #116, parent #6)
+
+Host `app/test/ics_import_test.dart` checks one complete outer VCALENDAR
+boundary pair before extracting events, including missing/duplicate/displaced
+markers, boundary parameters, BOM and blank-line tolerance, a VTIMEZONE block,
+and two valid neighboring events. Host widget test proves malformed envelopes
+show rejection without confirm/save controls. These are host parser/UI tests
+only; full RFC grammar, platform file picking, authenticated transport, device
+alarm execution, physical tests, and parent #6 remain open.
+
 ## CONN-05 ICS bounded-recurrence gate (parent #6)
 
 Host `app/test/ics_import_test.dart` rejects `COUNT` and `UNTIL` conditions

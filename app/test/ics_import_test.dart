@@ -86,6 +86,60 @@ void main() {
       );
     });
 
+    test(
+      'one envelope permits a BOM, blank lines, zones, and neighboring events',
+      () {
+        final result = runImport(
+          '\uFEFF\r\n\r\n${wrap([
+            'BEGIN:VTIMEZONE',
+            'TZID:America/New_York',
+            'END:VTIMEZONE',
+            vevent(['UID:a', 'DTSTART:20260901T070000']),
+            vevent(['UID:b', 'DTSTART:20260902T080000']),
+          ])}\r\n',
+        );
+        expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+          'a',
+          'b',
+        ]);
+      },
+    );
+
+    test(
+      'missing, displaced, or repeated calendar boundaries reject whole import',
+      () {
+        final event = vevent(['UID:outside', 'DTSTART:20260901T070000']);
+        for (final input in [
+          'BEGIN:VCALENDAR\r\n$event',
+          'BEGIN:VCALENDAR\r\n$event\r\nEND:VCALENDAR\r\n$event',
+          '$event\r\n${wrap([event])}',
+          '${wrap([event])}\r\nEND:VCALENDAR',
+          'BEGIN:VCALENDAR\r\n${wrap([event])}\r\nEND:VCALENDAR',
+          'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n${wrap([event])}',
+          'BEGIN:VCALENDAR\r\n$event\r\nBEGIN:VCALENDAR\r\nEND:VCALENDAR',
+        ]) {
+          expect(
+            () => runImport(input),
+            throwsA(isA<IcsImportNotCalendarException>()),
+            reason: input,
+          );
+        }
+      },
+    );
+
+    test('calendar boundaries with parameters do not create an envelope', () {
+      final event = vevent(['UID:x', 'DTSTART:20260901T070000']);
+      for (final input in [
+        'BEGIN;X=1:VCALENDAR\r\n$event\r\nEND:VCALENDAR',
+        'BEGIN:VCALENDAR\r\n$event\r\nEND;X=1:VCALENDAR',
+      ]) {
+        expect(
+          () => runImport(input),
+          throwsA(isA<IcsImportNotCalendarException>()),
+        );
+      }
+    });
+
     test('empty and junk inputs throw', () {
       expect(
         () => importIcsSuggestions(''),
