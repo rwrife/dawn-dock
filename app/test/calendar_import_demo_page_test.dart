@@ -30,6 +30,22 @@ Future<void> _pumpTallPage(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('broken calendar envelope rejects review without saving', (
+    tester,
+  ) async {
+    await _pumpTallPage(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('calendar-input')),
+      '$calendar\nBEGIN:VEVENT\nUID:outside\nDTSTART:20260901T070000\nEND:VEVENT',
+    );
+    await tester.tap(find.text('Review calendar suggestions'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Import rejected:'), findsOneWidget);
+    expect(find.text('Private meeting'), findsNothing);
+    expect(find.byKey(const ValueKey('confirm-import')), findsNothing);
+    expect(find.textContaining('saved in memory'), findsNothing);
+  });
+
   testWidgets('review requires confirmation; cancel never saves', (
     tester,
   ) async {
@@ -394,7 +410,7 @@ END:VCALENDAR''',
     await tester.enterText(find.byKey(const ValueKey('calendar-input')), 'bad');
     await tester.tap(find.text('Review calendar suggestions'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('missing BEGIN:VCALENDAR'), findsOneWidget);
+    expect(find.textContaining('Import rejected:'), findsOneWidget);
     expect(find.byKey(const ValueKey('confirm-import')), findsNothing);
     await tester.enterText(
       find.byKey(const ValueKey('calendar-input')),

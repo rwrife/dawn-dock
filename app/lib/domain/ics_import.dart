@@ -77,7 +77,7 @@ class IcsImportTooManyEventsException extends IcsImportException {
   const IcsImportTooManyEventsException(super.message);
 }
 
-/// The input has no `BEGIN:VCALENDAR` line and is therefore not a calendar.
+/// The input lacks one complete, outer `VCALENDAR` envelope.
 class IcsImportNotCalendarException extends IcsImportException {
   const IcsImportNotCalendarException(super.message);
 }
@@ -251,18 +251,51 @@ IcsImportResult importIcsSuggestions(String text) {
       'input exceeds the 1 MiB import ceiling',
     );
   }
-  final lines = _unfold(text);
-  final isCalendar = lines.any((line) {
+  final lines = _unfold(text.startsWith('\uFEFF') ? text.substring(1) : text);
+  var startIndex = -1;
+  var endIndex = -1;
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    if (line.trim().isEmpty) continue;
     final prop = _propertyOf(line);
-    return prop != null &&
+    if (prop != null &&
         prop.name == 'BEGIN' &&
-        prop.rawValue.toUpperCase() == 'VCALENDAR';
-  });
-  if (!isCalendar) {
-    throw const IcsImportNotCalendarException('missing BEGIN:VCALENDAR');
+        prop.params.isEmpty &&
+        line.toUpperCase() == 'BEGIN:VCALENDAR') {
+      if (startIndex >= 0) {
+        throw const IcsImportNotCalendarException(
+          'repeated or nested BEGIN:VCALENDAR boundary',
+        );
+      }
+      startIndex = i;
+    } else if (prop != null &&
+        prop.name == 'END' &&
+        prop.params.isEmpty &&
+        line.toUpperCase() == 'END:VCALENDAR') {
+      if (startIndex < 0 || endIndex >= 0) {
+        throw const IcsImportNotCalendarException(
+          'repeated or misplaced END:VCALENDAR boundary',
+        );
+      }
+      endIndex = i;
+    } else if (startIndex < 0 ||
+        endIndex >= 0 ||
+        (prop != null &&
+            (prop.name == 'BEGIN' || prop.name == 'END') &&
+            prop.rawValue.toUpperCase() == 'VCALENDAR')) {
+      throw const IcsImportNotCalendarException(
+        'calendar content outside VCALENDAR envelope or invalid boundary',
+      );
+    }
   }
 
-  final blocks = _splitVEvents(lines);
+  if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex) {
+    throw const IcsImportNotCalendarException(
+      'missing complete VCALENDAR envelope',
+    );
+  }
+
+  final blocks = _splitVEvents(lines.sublist(startIndex + 1, endIndex));
   if (blocks.length > kIcsImportMaxEvents) {
     throw IcsImportTooManyEventsException(
       'more than $kIcsImportMaxEvents VEVENT blocks (${blocks.length})',
