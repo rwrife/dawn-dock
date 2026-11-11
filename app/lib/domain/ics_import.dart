@@ -495,6 +495,7 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
   final blocks = <_EventBlock>[];
   _EventBlock? open;
   var nestedDepth = 0;
+  var nonEventDepth = 0;
   for (final line in lines) {
     final prop = _propertyOf(line);
     if (prop == null) {
@@ -504,8 +505,13 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
       continue;
     }
     if (prop.name == 'BEGIN' && prop.rawValue.toUpperCase() == 'VEVENT') {
-      if (open != null) {
-        open.malformed = true; // nested BEGIN:VEVENT
+      if (open != null || nonEventDepth > 0) {
+        if (open != null) {
+          open.malformed = true; // nested BEGIN:VEVENT
+        } else {
+          final malformed = _EventBlock()..malformed = true;
+          blocks.add(malformed);
+        }
         continue;
       }
       open = _EventBlock();
@@ -520,6 +526,11 @@ List<_EventBlock> _splitVEvents(List<String> lines) {
       continue;
     }
     if (open == null) {
+      if (prop.name == 'BEGIN') {
+        nonEventDepth++;
+      } else if (prop.name == 'END') {
+        if (nonEventDepth > 0) nonEventDepth--;
+      }
       continue; // outside any VEVENT — never retained
     }
     if (prop.name == 'BEGIN') {

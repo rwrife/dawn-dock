@@ -86,6 +86,31 @@ void main() {
       );
     });
 
+    test('VEVENT inside a non-event component cannot become a suggestion', () {
+      final result = runImport(
+        wrap([
+          'BEGIN:VTODO',
+          vevent(['UID:private', 'DTSTART:20260901T070000', 'SUMMARY:Secret']),
+          'END:VTODO',
+          'BEGIN:VTIMEZONE',
+          vevent(['UID:also-private', 'DTSTART:20260901T080000']),
+          'END:VTIMEZONE',
+          vevent(['UID:public', 'DTSTART:20260902T090000']),
+        ]),
+      );
+      expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+        'public',
+      ]);
+      expect(
+        result.notices.where((n) => n.code == kIcsNoticeMalformedEvent),
+        hasLength(2),
+      );
+      expect(
+        jsonEncode(result.notices.map((n) => n.toMap()).toList()),
+        isNot(contains('private')),
+      );
+    });
+
     test(
       'one envelope permits a BOM, blank lines, zones, and neighboring events',
       () {
