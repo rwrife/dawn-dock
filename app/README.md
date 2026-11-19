@@ -161,6 +161,10 @@ temporary directory, explicitly labeled as demo-scoped on screen).
   repeated calendar boundary markers reject the whole import without suggestions,
   while UTF-8 BOM, blank lines, valid VTIMEZONE components, and adjacent events
   remain supported.
+  Non-event components close only on a matching component name, in nesting
+  order (case-insensitive). Mismatched END markers cannot expose a nested
+  VEVENT as an alarm suggestion; such events receive value-free
+  `malformed-event` notices. Valid events after matching closers stay reviewable.
   Cross-file reconciliation remains unsupported.
   Host tests cover these boundaries; no real calendar account, platform file
   import, or physical alarm test is claimed.
