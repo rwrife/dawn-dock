@@ -111,6 +111,64 @@ void main() {
       );
     });
 
+    test('mismatched non-event closers do not expose nested event content', () {
+      final privateEvent = vevent([
+        'UID:private',
+        'DTSTART:20260901T070000',
+        'SUMMARY:Secret label',
+      ]);
+      for (final enclosed in [
+        ['BEGIN:VTODO', 'END:VTIMEZONE', privateEvent, 'END:VTODO'],
+        [
+          'BEGIN:VTIMEZONE',
+          'BEGIN:STANDARD',
+          'END:VTODO',
+          'END:STANDARD',
+          privateEvent,
+          'END:VTIMEZONE',
+        ],
+      ]) {
+        final result = runImport(
+          wrap([
+            ...enclosed,
+            vevent(['UID:public', 'DTSTART:20260902T090000']),
+          ]),
+        );
+        expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+          'public',
+        ]);
+        expect(
+          result.notices.where((n) => n.code == kIcsNoticeMalformedEvent),
+          hasLength(1),
+        );
+        final notices = jsonEncode(
+          result.notices.map((n) => n.toMap()).toList(),
+        );
+        expect(notices, isNot(contains('private')));
+        expect(notices, isNot(contains('Secret label')));
+      }
+    });
+
+    test('matching nested non-event closers preserve neighboring events', () {
+      final result = runImport(
+        wrap([
+          'BEGIN:VTIMEZONE',
+          'BEGIN:STANDARD',
+          'DTSTART:20261101T020000',
+          'END:standard',
+          'BEGIN:DAYLIGHT',
+          'DTSTART:20260308T020000',
+          'END:daylight',
+          'END:vtimezone',
+          vevent(['UID:public', 'DTSTART:20260902T090000']),
+        ]),
+      );
+      expect(result.suggestions.map((d) => d.provenance!.sourceEventId), [
+        'public',
+      ]);
+      expect(codes(result), isNot(contains(kIcsNoticeMalformedEvent)));
+    });
+
     test(
       'one envelope permits a BOM, blank lines, zones, and neighboring events',
       () {
