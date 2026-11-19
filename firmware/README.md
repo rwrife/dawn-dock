@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence plus deterministic recurrence-to-committed-UTC materialization cores, a host-tested bounded TZif-to-rules adapter over sha256-pinned IANA 2026c records, a host-tested runtime coordinator composing invalid-time freeze, boot-gated reboot recovery, invalid-interval reconciliation, and committed evaluation into one deterministic tick order, a transport-neutral protocol-envelope preflight validator, and a bounded JSON body parser with schema-faithful message-body validation and canonical contract fixtures. An ESP-IDF NVS adapter and storage-only startup diagnostic are now host-tested with fake APIs. No firmware has been flashed to physical hardware, and no RTC, display, controls, audio, authenticated transport session, or on-device IANA rule-data embedding is implemented yet.
+Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence plus deterministic recurrence-to-committed-UTC materialization cores, a host-tested bounded TZif-to-rules adapter over sha256-pinned IANA 2026c records, a host-tested runtime coordinator composing invalid-time freeze, boot-gated reboot recovery, invalid-interval reconciliation, and committed evaluation into one deterministic tick order, a transport-neutral protocol-envelope preflight validator, and a bounded JSON body parser with schema-faithful message-body validation and canonical contract fixtures. An ESP-IDF NVS adapter and storage-only startup diagnostic are now host-tested with fake APIs. A read-only DS3231M UTC adapter and bounded ESP-IDF I2C binding have host fake coverage but are not called by startup. No firmware has been flashed to physical hardware, and no live RTC, display, controls, audio, authenticated transport session, or on-device IANA rule-data embedding is implemented yet.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -100,6 +100,56 @@ non-zero phase. Analog filtering, detent-to-phase electrical alignment,
 clockwise direction mapping, and physical knob handling require target
 integration and bench capture.
 
+## Read-only RTC adapter
+
+`read_ds3231_utc` uses the injectable `RtcRegisterReader` hardware boundary.
+It decodes a single coherent 16-byte burst covering the DS3231M's
+time/calendar, control, and status registers, supports both 12-hour and
+24-hour encodings, and returns UTC seconds only for valid BCD/calendar
+data in 2000..2099. The century bit is rejected rather than guessing an era
+beyond the supported range. The weekday register must be 1..7, but its
+user-defined numbering is not used to select a calendar date.
+
+An asserted oscillator-stop flag (OSF), disabled battery-backup oscillator
+(EOSC), malformed date, unsupported century, or failed I2C read produces
+an explicit status and **no timestamp**. The original transport error is
+preserved. Reading never clears OSF, changes oscillator configuration,
+sets the time, or falls back to system/build/network time. A valid snapshot
+assumes a separately confirmed **UTC** provisioning operation; OSF alone
+cannot establish provenance or accuracy. Confirmed time-setting/OSF clearing
+and persistent time-provisioning evidence remain unimplemented.
+
+`components/rtc_hardware` supplies `EspRtcRegisterReader`, which borrows a
+synchronous ESP-IDF I2C device handle at raw 7-bit address `0x68`. It makes
+one `i2c_master_transmit_receive` call: write register pointer `0x00`, then
+read 16 bytes with a 20 ms driver timeout and no retry. A null handle is an
+explicit error. The owner must create and retain the bus/device, serialize
+configuration changes, and register **no asynchronous callbacks**. Rev A's
+shared bus is SDA GPIO8/SCL GPIO9; use 100 kHz initially, and do not move to
+400 kHz until the documented rise-time check passes. This adapter does not
+allocate or reconfigure the shared bus. Driver timeout is not a measured
+whole-system latency guarantee.
+
+Contract sources: Analog Devices [DS3231M datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/ds3231m.pdf),
+"Time and Date Operation", timekeeper register map, and control/status
+register descriptions (secondary buffers latch on I2C START; EOSC controls
+VBAT operation; OSF remains set until explicitly cleared), and the pinned
+[ESP-IDF 5.5.5 I2C API](https://docs.espressif.com/projects/esp-idf/en/v5.5.5/esp32s3/api-reference/peripherals/i2c.html).
+`rtc_tests` covers UTC/leap/calendar boundaries, AM/PM, malformed/reserved
+bits, OSF/EOSC, century refusal, recovery after I/O failure, and the actual
+binding against a fake SDK call including timeout propagation.
+
+RTC-slice host verification: all **22/22 CTest cases passed** with Zig
+0.14.1/Clang 19.1.7 (`x86_64-windows-gnu`, executed on Windows ARM64);
+the focused RTC executable also passed with `-fsanitize=undefined
+-fno-sanitize-recover=all`. The checked-in CI runs the same host fixtures
+and cross-builds `rtc_hardware` against the pinned real ESP-IDF headers.
+
+`app_main` remains storage-diagnostic-only: bus ownership, RTC sampling and
+freshness, confirmed UTC provisioning, boot identity, runtime tick/output
+wiring, and physical 24-hour retention/drift tests are still open. Host
+register fixtures and an ESP-IDF cross-build do not prove an RTC was read.
+
 ## Pinned toolchain
 
 - ESP-IDF release: `v5.5.5` (`.idf-version`)
@@ -172,7 +222,7 @@ Recovery baseline:
 - on-device rule-data delivery: embedding the pinned TZif records (adapter parsing core is host-tested in `tzif_rules`), rule-data update transport, and the storage/rollback path for a new pinned IANA version; plus end-to-end runtime plumbing of recurrence materialization into persisted schedule updates;
 - RTC validity/correction reconciliation and multiple crossed occurrences;
 - ESP-IDF NVS target execution, brownout/flash fault behavior, partition-upgrade recovery, and 100-cycle physical persistence evidence (the adapter is now host-tested against fake APIs);
-- hardware-abstraction interfaces and real RTC/display/backlight/control/sensor/audio integration;
+- live RTC sampling/provisioning and runtime wiring (the read-only DS3231M decoder and ESP-IDF I2C binding have host fake coverage), plus display/backlight/control/sensor/audio interfaces and integration;
 - authenticated transport/session implementation, device provisioning flow, bounded diagnostics plumbing, factory reset execution path, and update rollback;
 - protocol fuzzing corpus and target overload/failure-injection execution beyond the bounded parser limits (the parser itself is host-tested);
 - formatter/static-analysis policy beyond compiler warnings;
