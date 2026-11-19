@@ -1,14 +1,12 @@
 #pragma once
 // Test double declarations only. Production includes the ESP-IDF v5.5.5
 // headers.
+#include "esp_err.h"
+
 #include <cstddef>
 #include <cstdint>
-using esp_err_t = int;
 using nvs_handle_t = std::uint32_t;
 enum nvs_open_mode_t { NVS_READONLY, NVS_READWRITE };
-constexpr esp_err_t ESP_OK = 0;
-constexpr esp_err_t ESP_FAIL = -1;
-constexpr esp_err_t ESP_ERR_INVALID_STATE = 0x103;
 constexpr esp_err_t ESP_ERR_NVS_NOT_FOUND = 0x1102;
 constexpr esp_err_t ESP_ERR_NVS_INVALID_LENGTH = 0x110c;
 extern "C" {
