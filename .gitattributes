@@ -1,0 +1,4 @@
+hardware/kicad/dawn-dock.kicad_sch text eol=lf
+hardware/kicad/dawn-dock.kicad_pcb text eol=lf
+hardware/kicad/reports/*.json text eol=lf
+hardware/kicad/fabrication/rev-a0-prototype-review/*.csv text eol=lf

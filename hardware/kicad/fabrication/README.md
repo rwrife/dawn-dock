@@ -15,6 +15,13 @@
 
 `rev-a0-prototype-review/SHA256SUMS` covers the committed ZIP, placement CSV, and two PNG renders. The deterministic ZIP contains all Gerber and drill outputs; unpacked plots and Gerbers are reproducible exporter scratch rather than tracked duplicates.
 
+The root `.gitattributes` preserves LF bytes for the placement CSV and the
+schematic, PCB, and JSON reports used in the provenance chain, including on
+Windows with `core.autocrlf=true`. Existing checkouts may still contain previously
+converted CRLF files; verify a fresh checkout before interpreting a checksum
+mismatch as artifact corruption. Checksums must be checked against actual bytes,
+not newline-normalized substitutes.
+
 ## Generated artifacts
 
 - Nine Gerber layers: front/back copper, mask, paste, silkscreen, and Edge.Cuts
