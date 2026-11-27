@@ -11,6 +11,7 @@ idf_component_register(
     "quadrature_encoder.cpp"
     "recurrence_resolver.cpp"
     "runtime_coordinator.cpp"
+    "runtime_loop.cpp"
     "rtc.cpp"
     "schedule_materializer.cpp"
     "schedule_store.cpp"

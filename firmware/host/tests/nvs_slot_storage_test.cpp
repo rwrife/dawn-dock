@@ -1,6 +1,7 @@
 #include "dawn/nvs_slot_storage.hpp"
 #include "dawn/esp_rtc_register_reader.hpp"
 #include "dawn/rtc.hpp"
+#include "freertos/task.h"
 
 #include <algorithm>
 #include <array>
@@ -49,6 +50,10 @@ int rtc_bus_deletes{};
 bool valid_rtc_bus_config{};
 bool valid_rtc_device_config{};
 bool valid_rtc_read{};
+int task_creates{};
+bool fail_task_create{};
+void *task_argument{};
+TaskFunction_t task_function{};
 void check(bool condition, const char *message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
@@ -128,6 +133,17 @@ esp_err_t i2c_master_transmit_receive(
   return fail_i2c_read;
 }
 
+BaseType_t xTaskCreate(TaskFunction_t function, const char *, std::uint32_t,
+                       void *argument, UBaseType_t, TaskHandle_t *) {
+  ++task_creates;
+  task_function = function;
+  task_argument = argument;
+  return fail_task_create ? pdFAIL : pdPASS;
+}
+void vTaskDelay(TickType_t) {}
+std::int64_t esp_timer_get_time() { return 0; }
+std::uint32_t esp_random() { return 0x12345678U; }
+
 esp_err_t nvs_flash_init_partition(const char *partition) {
   check(std::string(partition) == "alarm_nvs", "dedicated partition");
   return fail_init ? ESP_FAIL : ESP_OK;
@@ -205,22 +221,29 @@ int main(int argc, char **argv) {
     app_main();
     check(opens == 1 && commits == 0 && blobs.empty(),
           "startup inspects empty storage without provisioning an alarm");
-    check(rtc_bus_creates == 1 && rtc_device_adds == 1 && rtc_reads == 1 &&
-              rtc_device_removes == 1 && rtc_bus_deletes == 1 &&
-              valid_rtc_bus_config && valid_rtc_device_config &&
-              valid_rtc_read,
-          "startup makes one bounded read-only RTC sample and releases I2C");
+    check(rtc_bus_creates == 1 && rtc_device_adds == 1 && task_creates == 1 &&
+              task_function != nullptr && task_argument != nullptr &&
+              rtc_reads == 0 && rtc_device_removes == 0 &&
+              rtc_bus_deletes == 0 && valid_rtc_bus_config &&
+              valid_rtc_device_config,
+          "startup opens I2C once and hands it to the runtime task");
     blobs["slot_a"] = {std::byte{1}};
     app_main();
-    check(error_logs == 2 && commits == 0 && rtc_reads == 1,
-          "corrupt storage is preserved and prevents RTC startup");
+    check(error_logs == 2 && commits == 0 && task_creates == 1 &&
+              rtc_bus_creates == 1,
+          "corrupt storage is preserved and prevents runtime start");
     blobs.clear();
-    fail_i2c_read = ESP_ERR_TIMEOUT;
+    fail_task_create = true;
     app_main();
-    fail_i2c_read = ESP_OK;
-    check(error_logs == 3 && rtc_reads == 2 && rtc_device_removes == 2 &&
-              rtc_bus_deletes == 2,
-          "RTC read failure is explicit and still releases I2C resources");
+    fail_task_create = false;
+    check(error_logs == 3 && task_creates == 2 && rtc_device_removes == 1 &&
+              rtc_bus_deletes == 1,
+          "task creation failure is explicit and releases I2C resources");
+    fail_i2c_add_device = ESP_ERR_TIMEOUT;
+    app_main();
+    fail_i2c_add_device = ESP_OK;
+    check(error_logs == 4 && task_creates == 2 && rtc_bus_deletes == 2,
+          "missing RTC device releases the bus and starts no task");
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
   }
   dawn::NvsSlotStorage uninitialized;

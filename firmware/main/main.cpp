@@ -1,10 +1,21 @@
 #include "dawn/nvs_slot_storage.hpp"
 #include "dawn/esp_rtc_register_reader.hpp"
 #include "dawn/rtc.hpp"
+#include "dawn/runtime_loop.hpp"
 
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "esp_log.h"
+#include "esp_random.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include <cstdint>
+#include <cstdio>
+#include <new>
+#include <string>
+#include <utility>
 
 namespace {
 constexpr char kTag[] = "dawn_dock";
@@ -30,7 +41,92 @@ const char *rtc_status_name(dawn::RtcStatus status) {
   return "unknown";
 }
 
-void sample_rtc_at_startup() {
+constexpr std::int64_t kMicrosecondsPerSecond = 1'000'000;
+constexpr std::uint32_t kRuntimeStackBytes = 8192;
+constexpr UBaseType_t kRuntimePriority = 5;
+constexpr std::uint32_t kStepPeriodMilliseconds = 1000;
+
+// Lives for the whole boot: the runtime task borrows it forever.
+struct Runtime {
+  Runtime(i2c_master_bus_handle_t bus_handle,
+          i2c_master_dev_handle_t device_handle, std::string boot_id)
+      : bus(bus_handle), device(device_handle), reader(device_handle),
+        store(backend), loop(reader, store, std::move(boot_id)) {}
+
+  i2c_master_bus_handle_t bus;
+  i2c_master_dev_handle_t device;
+  dawn::EspRtcRegisterReader reader;
+  dawn::NvsSlotStorage backend;
+  dawn::AtomicScheduleStore store;
+  dawn::RuntimeLoop loop;
+};
+
+std::string make_boot_id() {
+  // Distinct per reset; esp_random is hardware-backed once RF/bootloader
+  // entropy is active and is only an identifier here, never a secret.
+  char buffer[17];
+  std::snprintf(buffer, sizeof(buffer), "%08lx%08lx",
+                static_cast<unsigned long>(esp_random()),
+                static_cast<unsigned long>(esp_random()));
+  return buffer;
+}
+
+void release_i2c(i2c_master_bus_handle_t bus,
+                 i2c_master_dev_handle_t device) {
+  if (device != nullptr) {
+    const auto remove_error = i2c_master_bus_rm_device(device);
+    if (remove_error != ESP_OK) {
+      ESP_LOGE(kTag, "RTC I2C device cleanup failed (%d)",
+               static_cast<int>(remove_error));
+    }
+  }
+  const auto delete_error = i2c_del_master_bus(bus);
+  if (delete_error != ESP_OK) {
+    ESP_LOGE(kTag, "RTC I2C bus cleanup failed (%d)",
+             static_cast<int>(delete_error));
+  }
+}
+
+void log_step_changes(const dawn::RuntimeLoopStep &step,
+                      const dawn::RuntimeLoopStep &previous, bool first) {
+  if (first || step.rtc_status != previous.rtc_status ||
+      step.tick.status != previous.tick.status) {
+    ESP_LOGI(kTag, "runtime rtc=%s transport=%d tick=%u revision=%llu",
+             rtc_status_name(step.rtc_status),
+             static_cast<int>(step.transport_error),
+             static_cast<unsigned>(step.tick.status),
+             static_cast<unsigned long long>(step.tick.schedule_revision));
+  }
+  for (const auto &effect : step.tick.effects) {
+    if (effect.start_alert || effect.stop_alert) {
+      // Display/audio effects are not integrated yet; the durable journal
+      // commit already happened before this edge was reported.
+      ESP_LOGI(kTag, "alarm edge id=%s start=%d stop=%d late=%d",
+               effect.alarm_id.c_str(), static_cast<int>(effect.start_alert),
+               static_cast<int>(effect.stop_alert),
+               static_cast<int>(effect.late));
+    }
+  }
+}
+
+void runtime_task(void *argument) {
+  auto &runtime = *static_cast<Runtime *>(argument);
+  dawn::RuntimeLoopStep previous;
+  bool first = true;
+  for (;;) {
+    const auto monotonic_seconds =
+        esp_timer_get_time() / kMicrosecondsPerSecond;
+    auto step = runtime.loop.step(monotonic_seconds);
+    log_step_changes(step, previous, first);
+    previous = std::move(step);
+    first = false;
+    vTaskDelay(pdMS_TO_TICKS(kStepPeriodMilliseconds));
+  }
+}
+
+// Opens the RTC bus and starts the one-second runtime task. On any failure
+// the I2C resources are released and no alarm runs (time stays invalid).
+void start_runtime() {
   i2c_master_bus_config_t bus_config{};
   bus_config.i2c_port = I2C_NUM_0;
   bus_config.sda_io_num = kI2cSda;
@@ -44,7 +140,7 @@ void sample_rtc_at_startup() {
   i2c_master_bus_handle_t bus{};
   auto error = i2c_new_master_bus(&bus_config, &bus);
   if (error != ESP_OK) {
-    ESP_LOGE(kTag, "RTC I2C bus unavailable (%d); time remains invalid",
+    ESP_LOGE(kTag, "RTC I2C bus unavailable (%d); no alarms started",
              static_cast<int>(error));
     return;
   }
@@ -56,37 +152,24 @@ void sample_rtc_at_startup() {
   i2c_master_dev_handle_t device{};
   error = i2c_master_bus_add_device(bus, &device_config, &device);
   if (error != ESP_OK) {
-    ESP_LOGE(kTag, "RTC I2C device unavailable (%d); time remains invalid",
+    ESP_LOGE(kTag, "RTC I2C device unavailable (%d); no alarms started",
              static_cast<int>(error));
-    const auto delete_error = i2c_del_master_bus(bus);
-    if (delete_error != ESP_OK) {
-      ESP_LOGE(kTag, "RTC I2C bus cleanup failed (%d)",
-               static_cast<int>(delete_error));
-    }
+    release_i2c(bus, nullptr);
     return;
   }
 
-  dawn::EspRtcRegisterReader reader(device);
-  const auto observation = dawn::read_ds3231_utc(reader);
-  if (observation.status == dawn::RtcStatus::valid &&
-      observation.utc_seconds.has_value()) {
-    ESP_LOGI(kTag, "RTC startup sample valid; UTC seconds=%lld",
-             static_cast<long long>(*observation.utc_seconds));
-  } else {
-    ESP_LOGE(kTag, "RTC startup sample unusable; status=%s transport=%d",
-             rtc_status_name(observation.status),
-             static_cast<int>(observation.transport_error));
+  auto *runtime = new (std::nothrow) Runtime(bus, device, make_boot_id());
+  if (runtime == nullptr) {
+    ESP_LOGE(kTag, "runtime allocation failed; no alarms started");
+    release_i2c(bus, device);
+    return;
   }
-
-  const auto remove_error = i2c_master_bus_rm_device(device);
-  if (remove_error != ESP_OK) {
-    ESP_LOGE(kTag, "RTC I2C device cleanup failed (%d)",
-             static_cast<int>(remove_error));
-  }
-  const auto delete_error = i2c_del_master_bus(bus);
-  if (delete_error != ESP_OK) {
-    ESP_LOGE(kTag, "RTC I2C bus cleanup failed (%d)",
-             static_cast<int>(delete_error));
+  if (xTaskCreate(runtime_task, "dawn_runtime", kRuntimeStackBytes, runtime,
+                  kRuntimePriority, nullptr) != pdPASS) {
+    ESP_LOGE(kTag, "runtime task creation failed; no alarms started");
+    release_i2c(bus, device);
+    delete runtime;
+    return;
   }
 }
 }
@@ -117,8 +200,8 @@ extern "C" void app_main() {
       static_cast<unsigned>(loaded.status),
       static_cast<unsigned long long>(loaded.snapshot.revision),
       static_cast<unsigned>(loaded.corruption_detected));
-  // One read-only sample validates RTC transport/time at startup. Runtime
-  // scheduling and alert effects remain disabled until their target paths
-  // are integrated.
-  sample_rtc_at_startup();
+  // Storage is verified; the runtime task now samples the RTC every second
+  // and evaluates the persisted schedule. Alert effects are log-only until
+  // the display/audio paths are integrated.
+  start_runtime();
 }
