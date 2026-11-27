@@ -1,6 +1,6 @@
 # Dawn Dock firmware
 
-Status: executable ESP-IDF scaffold plus host-tested offline alarm occurrence, committed-schedule evaluation with active lifecycle orchestration, atomic schedule/runtime-journal storage, weekly local-calendar recurrence plus deterministic recurrence-to-committed-UTC materialization cores, a host-tested bounded TZif-to-rules adapter over sha256-pinned IANA 2026c records, a host-tested runtime coordinator composing invalid-time freeze, boot-gated reboot recovery, invalid-interval reconciliation, and committed evaluation into one deterministic tick order, a transport-neutral protocol-envelope preflight validator, and a bounded JSON body parser with schema-faithful message-body validation and canonical contract fixtures. An ESP-IDF NVS adapter and storage-only startup diagnostic are now host-tested with fake APIs. A read-only DS3231M UTC adapter and bounded ESP-IDF I2C binding have host fake coverage but are not called by startup. No firmware has been flashed to physical hardware, and no live RTC, display, controls, audio, authenticated transport session, or on-device IANA rule-data embedding is implemented yet.
+Status: the host-tested alarm, recurrence, timezone, runtime-policy, protocol, and atomic-storage cores have a pinned ESP-IDF build. Startup initializes and inspects NVS, then makes one read-only DS3231M UTC sample over GPIO 8/9 I2C with the bounded register reader; unusable RTC state and transport failures are reported without setting the clock, changing the RTC, or starting runtime alarms. Periodic sampling/runtime ticks, schedule provisioning, display, controls, audio, authenticated transport, and on-device IANA rule-data embedding remain unimplemented. Firmware has not been flashed, and no target or physical behavior is claimed.
 
 Normative behavior and boundaries remain in [`docs/alarm-semantics.md`](../docs/alarm-semantics.md), [`docs/system-architecture.md`](../docs/system-architecture.md), and [`docs/threat-model.md`](../docs/threat-model.md). Tests trace to [`docs/verification-matrix.md`](../docs/verification-matrix.md).
 
@@ -145,10 +145,11 @@ the focused RTC executable also passed with `-fsanitize=undefined
 -fno-sanitize-recover=all`. The checked-in CI runs the same host fixtures
 and cross-builds `rtc_hardware` against the pinned real ESP-IDF headers.
 
-`app_main` remains storage-diagnostic-only: bus ownership, RTC sampling and
-freshness, confirmed UTC provisioning, boot identity, runtime tick/output
-wiring, and physical 24-hour retention/drift tests are still open. Host
-register fixtures and an ESP-IDF cross-build do not prove an RTC was read.
+`app_main` remains diagnostic-only: it samples the RTC once at startup and
+logs only whether the UTC observation is usable. Persistent bus ownership,
+sample freshness, confirmed UTC provisioning, boot identity, periodic runtime
+ticks, alert outputs, and physical 24-hour retention/drift tests remain open.
+Host fakes and an ESP-IDF cross-build do not prove an RTC was read on hardware.
 
 ## Pinned toolchain
 

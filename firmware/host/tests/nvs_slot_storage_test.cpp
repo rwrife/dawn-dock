@@ -1,5 +1,9 @@
 #include "dawn/nvs_slot_storage.hpp"
+#include "dawn/esp_rtc_register_reader.hpp"
+#include "dawn/rtc.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -8,6 +12,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+struct i2c_master_bus_t {};
+struct i2c_master_dev_t {};
 
 namespace {
 std::map<std::string, std::vector<std::byte>> blobs;
@@ -27,6 +34,21 @@ bool fail_next_allocation{};
 int fetches{};
 int opens{};
 int error_logs{};
+i2c_master_bus_t rtc_bus;
+i2c_master_dev_t rtc_device;
+std::array<std::uint8_t, dawn::kDs3231SnapshotBytes> rtc_registers{
+    0x56, 0x34, 0x12, 0x01, 0x29, 0x02, 0x24};
+esp_err_t fail_i2c_bus{};
+esp_err_t fail_i2c_add_device{};
+esp_err_t fail_i2c_read{};
+int rtc_bus_creates{};
+int rtc_device_adds{};
+int rtc_reads{};
+int rtc_device_removes{};
+int rtc_bus_deletes{};
+bool valid_rtc_bus_config{};
+bool valid_rtc_device_config{};
+bool valid_rtc_read{};
 void check(bool condition, const char *message) {
   if (!condition) {
     std::cerr << "FAIL: " << message << '\n';
@@ -56,6 +78,56 @@ void dawn_test_log(bool error, const char *, const char *, ...) {
 extern "C" void app_main();
 
 extern "C" {
+esp_err_t i2c_new_master_bus(const i2c_master_bus_config_t *config,
+                            i2c_master_bus_handle_t *bus) {
+  ++rtc_bus_creates;
+  valid_rtc_bus_config = config->i2c_port == I2C_NUM_0 &&
+                         config->sda_io_num == GPIO_NUM_8 &&
+                         config->scl_io_num == GPIO_NUM_9 &&
+                         config->clk_source == I2C_CLK_SRC_DEFAULT &&
+                         config->glitch_ignore_cnt == 7 &&
+                         !config->flags.enable_internal_pullup;
+  if (fail_i2c_bus != ESP_OK)
+    return fail_i2c_bus;
+  *bus = &rtc_bus;
+  return ESP_OK;
+}
+esp_err_t i2c_master_bus_add_device(i2c_master_bus_handle_t bus,
+                                    const i2c_device_config_t *config,
+                                    i2c_master_dev_handle_t *device) {
+  ++rtc_device_adds;
+  valid_rtc_device_config = bus == &rtc_bus &&
+                            config->dev_addr_length == I2C_ADDR_BIT_LEN_7 &&
+                            config->device_address == 0x68 &&
+                            config->scl_speed_hz == 100000;
+  if (fail_i2c_add_device != ESP_OK)
+    return fail_i2c_add_device;
+  *device = &rtc_device;
+  return ESP_OK;
+}
+esp_err_t i2c_master_bus_rm_device(i2c_master_dev_handle_t device) {
+  check(device == &rtc_device, "removes the registered RTC device");
+  ++rtc_device_removes;
+  return ESP_OK;
+}
+esp_err_t i2c_del_master_bus(i2c_master_bus_handle_t bus) {
+  check(bus == &rtc_bus, "deletes the created RTC bus");
+  ++rtc_bus_deletes;
+  return ESP_OK;
+}
+esp_err_t i2c_master_transmit_receive(
+    i2c_master_dev_handle_t device, const std::uint8_t *write_data,
+    std::size_t write_size, std::uint8_t *read_data, std::size_t read_size,
+    int timeout_ms) {
+  ++rtc_reads;
+  valid_rtc_read = device == &rtc_device && write_size == 1 &&
+                   write_data[0] == 0 &&
+                   read_size == dawn::kDs3231SnapshotBytes && timeout_ms == 20;
+  if (valid_rtc_read)
+    std::copy(rtc_registers.begin(), rtc_registers.end(), read_data);
+  return fail_i2c_read;
+}
+
 esp_err_t nvs_flash_init_partition(const char *partition) {
   check(std::string(partition) == "alarm_nvs", "dedicated partition");
   return fail_init ? ESP_FAIL : ESP_OK;
@@ -126,16 +198,29 @@ int main(int argc, char **argv) {
   if (argc > 1 && std::string(argv[1]) == "startup") {
     fail_init = true;
     app_main();
-    check(error_logs == 1 && opens == 0 && commits == 0,
-          "startup reports init failure without opening or writing");
+    check(error_logs == 1 && opens == 0 && commits == 0 &&
+              rtc_bus_creates == 0,
+          "storage init failure prevents RTC startup or writes");
     fail_init = false;
     app_main();
     check(opens == 1 && commits == 0 && blobs.empty(),
           "startup inspects empty storage without provisioning an alarm");
+    check(rtc_bus_creates == 1 && rtc_device_adds == 1 && rtc_reads == 1 &&
+              rtc_device_removes == 1 && rtc_bus_deletes == 1 &&
+              valid_rtc_bus_config && valid_rtc_device_config &&
+              valid_rtc_read,
+          "startup makes one bounded read-only RTC sample and releases I2C");
     blobs["slot_a"] = {std::byte{1}};
     app_main();
-    check(error_logs == 2 && commits == 0,
-          "startup reports corrupt storage as error without repair or erase");
+    check(error_logs == 2 && commits == 0 && rtc_reads == 1,
+          "corrupt storage is preserved and prevents RTC startup");
+    blobs.clear();
+    fail_i2c_read = ESP_ERR_TIMEOUT;
+    app_main();
+    fail_i2c_read = ESP_OK;
+    check(error_logs == 3 && rtc_reads == 2 && rtc_device_removes == 2 &&
+              rtc_bus_deletes == 2,
+          "RTC read failure is explicit and still releases I2C resources");
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
   }
   dawn::NvsSlotStorage uninitialized;
