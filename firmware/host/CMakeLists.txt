@@ -32,9 +32,10 @@ add_executable(nvs_slot_storage_tests
   tests/nvs_slot_storage_test.cpp
   ../main/main.cpp
   ../components/nvs_storage/nvs_slot_storage.cpp
+  ../components/rtc_hardware/esp_rtc_register_reader.cpp
 )
 target_include_directories(nvs_slot_storage_tests PRIVATE
-  fakes ../components/nvs_storage/include
+  fakes ../components/nvs_storage/include ../components/rtc_hardware/include
 )
 target_link_libraries(nvs_slot_storage_tests PRIVATE dawn_alarm_core Threads::Threads)
 target_compile_options(nvs_slot_storage_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
