@@ -2,7 +2,15 @@
 
 ## Scope
 
-Dawn Dock is a low-voltage, offline-first bedside clock. The MVP executes locally stored alarms without Wi-Fi, exposes essential controls physically, and accepts reviewed schedule updates from a companion app. The project includes editable KiCad hardware, ESP-IDF firmware, a Flutter companion, protocol fixtures, BOM exports, bring-up documentation, and fabrication artifacts when mature.
+Dawn Dock is a low-voltage, offline-first bedside clock. The MVP executes locally stored alarms without Wi-Fi and exposes essential controls physically. A companion app may later add reviewed schedule updates; it is not required for the standalone MVP. The project includes editable KiCad hardware, ESP-IDF firmware, a Flutter companion, protocol fixtures, BOM exports, bring-up documentation, and fabrication artifacts when mature.
+
+### MVP cutline and closure gate
+
+The first MVP is one usable, standalone bedside clock, not a complete mobile product or a production-ready release. It must show RTC-backed local time, retain and execute a user-configured recurring alarm with deterministic timezone/DST behavior while offline, and provide physical snooze/dismiss and brightness controls. Alarm evaluation and recovery must be safe across invalid time and reboot; stored schedules must not be silently erased or applied from an unreviewed source. Configuration may use a documented local service path until an on-device setup UI is implemented.
+
+The phone/desktop companion, calendar import, pairing and network transport, remote updates, weather, production enclosure, manufacturing release, 100-cycle endurance, formal EMC/ESD qualification, and field testing are post-MVP. They must not be represented as delivered or as prerequisites for the standalone MVP. USB 5 V operation from a certified external supply, protected power, bounded audio, correct RTC backup-cell handling, and safe staged bench bring-up remain MVP requirements.
+
+Close the MVP only after the editable prototype board has no unresolved build-blocking electrical/layout issue, at least one assembled device boots and keeps time, a recurring alarm rings and can be snoozed/dismissed with radios disabled, configuration and alarm state survive a controlled power cycle, and basic rail/current/temperature/audio checks are recorded with methods and results. Host tests, static checks, rendered artifacts, and simulations do not substitute for those bench results. A closed MVP is a prototype milestone, not a claim of production readiness or safety certification.
 
 ## Architecture
 
@@ -57,9 +65,9 @@ The normative v0.1 design baseline is split into reviewable sources:
 2. **Component validation and architecture proof (static selection complete)** — manufacturer documents, comparison, GPIO map, dated sourcing snapshot, and physical evidence gaps recorded. Measurements remain in integration/bring-up.
 3. **Editable KiCad carrier and BOM (schematic gate complete)** — editable schematic, native ERC, analyzer evidence, source-property BOM export, and review report are complete; PCB layout, DRC, cross-analysis, and fabrication evidence remain pending.
 4. **Firmware core** — deterministic alarm engine, persistence, RTC/timezone handling, controls, UI, diagnostics, recovery, build/tests.
-5. **Companion and protocol** — pairing, local schedule model, diff/apply, import/export, accessibility, build/tests.
-6. **Integration and bring-up** — assemble, measure rails/current/audio/brightness/time retention, exercise offline and DST cases, and document troubleshooting.
-7. **Fabrication/release** — verified Gerbers/drills/CPL where applicable, BOM, schematic PDF, renders, source archives, licenses, and release checklist.
+5. **Companion and protocol (post-MVP)** — pairing, local schedule model, diff/apply, import/export, accessibility, build/tests. None is needed to configure or operate the standalone MVP.
+6. **MVP integration and bring-up** — assemble one prototype, verify the offline clock/alarm and controls, measure basic power/temperature/audio behavior, exercise reboot and DST cases, and document results and troubleshooting.
+7. **Production/release readiness (post-MVP)** — enclosure completion, manufacturing/DFM sign-off, endurance/EMC/ESD and field evidence, signed/updateable packages, and release artifacts. Do not infer this readiness from MVP completion.
 
 ## Testing strategy
 
