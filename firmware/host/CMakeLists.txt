@@ -17,6 +17,7 @@ add_library(dawn_alarm_core
   ../components/alarm_core/quadrature_encoder.cpp
   ../components/alarm_core/recurrence_resolver.cpp
   ../components/alarm_core/runtime_coordinator.cpp
+  ../components/alarm_core/runtime_loop.cpp
   ../components/alarm_core/rtc.cpp
   ../components/alarm_core/schedule_materializer.cpp
   ../components/alarm_core/schedule_store.cpp
@@ -182,3 +183,10 @@ add_test(
   NAME protocol_fixture_contract_tests
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/protocol_fixture_contract_test.py
 )
+
+add_executable(runtime_loop_tests tests/runtime_loop_test.cpp)
+target_link_libraries(runtime_loop_tests PRIVATE dawn_alarm_core)
+target_compile_options(runtime_loop_tests PRIVATE
+  -Wall -Wextra -Wpedantic -Werror
+)
+add_test(NAME runtime_loop_tests COMMAND runtime_loop_tests)
